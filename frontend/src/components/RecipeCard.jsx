@@ -11,6 +11,15 @@ function RecipeCard({ recipe, onDelete, onEdit }) {
 
   return (
     <div className="recipe-card" onClick={() => setExpanded(!expanded)}>
+      <div className="card-image">
+        {recipe.image_url ? (
+          <img src={recipe.image_url} alt={recipe.title} />
+        ) : (
+          <div className="card-image-placeholder">
+            <span>{recipe.category === 'cake' || recipe.category === 'dessert' ? '🍰' : '🍽️'}</span>
+          </div>
+        )}
+      </div>
       <div className="card-header">
         <h3>{recipe.title}</h3>
         {recipe.category && <span className="badge category">{recipe.category}</span>}

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from supabase import create_client
 from app.config import get_settings
 from app.services.ai_parser import parse_recipe_from_text, parse_recipe_from_images, parse_recipe_from_video
-from app.services.scraper import scrape_webpage
+from app.services.scraper import scrape_webpage, extract_image_url
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,13 @@ async def ingest_from_url(request: UrlRequest):
     if "error" in recipe:
         raise HTTPException(status_code=422, detail=recipe["error"])
 
+    try:
+        image_url = await extract_image_url(request.url)
+        if image_url:
+            recipe["image_url"] = image_url
+    except Exception:
+        pass
+
     recipe["source_url"] = request.url
     recipe["source_type"] = "link"
     recipe["source_accessed_at"] = _now_iso()
@@ -63,6 +70,10 @@ async def ingest_from_youtube(request: UrlRequest):
     if "error" in recipe:
         logger.warning(f"AI returned error: {recipe['error']}")
         raise HTTPException(status_code=422, detail=recipe["error"])
+
+    thumbnail = _extract_youtube_thumbnail(request.url)
+    if thumbnail:
+        recipe["image_url"] = thumbnail
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "video"
@@ -96,7 +107,24 @@ async def ingest_from_image(files: list[UploadFile] = File(...)):
     recipe["source_type"] = "image"
     recipe["source_accessed_at"] = _now_iso()
     recipe["source_image_urls"] = source_image_urls
+    if source_image_urls:
+        recipe["image_url"] = source_image_urls[0]
     return recipe
+
+
+def _extract_youtube_thumbnail(url: str) -> str | None:
+    import re
+    patterns = [
+        r'youtube\.com/shorts/([a-zA-Z0-9_-]+)',
+        r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)',
+        r'youtu\.be/([a-zA-Z0-9_-]+)',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            video_id = match.group(1)
+            return f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+    return None
 
 
 def _upload_source_images(images: list[dict]) -> list[str]:
