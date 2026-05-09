@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function RecipeCard({ recipe, onDelete }) {
+function RecipeCard({ recipe, onDelete, onEdit }) {
   const [expanded, setExpanded] = useState(false)
 
   const totalTime = [
@@ -56,15 +56,56 @@ function RecipeCard({ recipe, onDelete }) {
             </div>
           )}
 
-          <button
-            className="delete-btn"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (confirm('Delete this recipe?')) onDelete(recipe.id)
-            }}
-          >
-            Delete Recipe
-          </button>
+          {(recipe.source_url || recipe.source_image_urls?.length > 0) && (
+            <div className="detail-section source-section">
+              <h4>Source</h4>
+              {recipe.source_url && (
+                <p>
+                  <a href={recipe.source_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                    {recipe.source_type === 'video' ? 'YouTube Video' : 'Original Link'}
+                  </a>
+                  {recipe.source_accessed_at && (
+                    <span className="source-date">
+                      {' '}— accessed {new Date(recipe.source_accessed_at).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+              )}
+              {recipe.source_image_urls?.length > 0 && (
+                <div className="source-images">
+                  {recipe.source_image_urls.map((url, i) => (
+                    <img key={i} src={url} alt={`Source photo ${i + 1}`} className="source-image" onClick={e => e.stopPropagation()} />
+                  ))}
+                  {recipe.source_accessed_at && !recipe.source_url && (
+                    <p className="source-date">
+                      Added {new Date(recipe.source_accessed_at).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="card-actions">
+            <button
+              className="edit-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(recipe)
+              }}
+            >
+              Edit Recipe
+            </button>
+            <button
+              className="delete-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('Delete this recipe?')) onDelete(recipe.id)
+              }}
+            >
+              Delete Recipe
+            </button>
+          </div>
         </div>
       )}
     </div>

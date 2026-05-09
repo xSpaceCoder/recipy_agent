@@ -10,29 +10,38 @@ Read `CONTEXT.md` for full project context (who I am, why I'm building this, con
 
 ## Project Overview
 A mobile-first recipe management web app with AI-powered ingestion and consultation.
-- **Frontend**: React (responsive, mobile-first)
-- **Backend**: Python (FastAPI or Flask)
-- **Database**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
-- **AI**: Claude API for recipe parsing, tagging, and consultation
+- **Frontend**: React + Vite (responsive, mobile-first)
+- **Backend**: Python (FastAPI)
+- **Database**: Supabase (PostgreSQL + Auth + Storage)
+- **AI**: Google AI Studio (Gemini 2.5 Flash) for recipe parsing, tagging, and consultation
+
+## Architecture Decisions (Resolved)
+- **FastAPI** chosen for the Python backend
+- **Frontend talks directly to Supabase** for CRUD operations (using JS client + anon key)
+- **Backend handles AI-powered features only** (ingestion parsing, consultation)
+- **Video processing**: Gemini's native multimodal video understanding (no yt-dlp, no transcript extraction)
+- **Image processing**: Send images directly to Gemini (multimodal, no separate OCR)
+- **Web scraping**: httpx + BeautifulSoup to extract text, then Gemini parses it
+- **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
 
 ## Core Features
 
-### Feature 1: Recipe Ingestion
+### Feature 1: Recipe Ingestion (Implemented)
 Accept recipes in ANY format and normalize them:
-- **Image** (photo of a printed recipe) → OCR + AI extraction
-- **Video + description** (Instagram Reels, YouTube Shorts) → transcript/description extraction + AI parsing
-- **Web link** → scrape recipe content
+- **Image** (photo of a printed recipe) → sent directly to Gemini multimodal
+- **Video** (YouTube Shorts, Instagram Reels) → video URL passed to Gemini for analysis
+- **Web link** → scrape with httpx/BS4, then AI extraction
 - **Manual entry** → structured form
 
 The agent estimates missing metadata (prep time, dietary tags, etc.) when not explicitly provided.
 
-### Feature 2: Recipe Consultation & Listing
-- Browse/filter/search recipes by tags, season, prep time, etc.
-- Natural language queries: "I want a light, fast meal tonight. I have vegetables and rice at home."
-- Shopping list generation from selected recipes
-- Recipe scaling (adjust servings)
+### Feature 2: Recipe Consultation & Listing (Partially Implemented)
+- Browse/filter/search recipes by tags, season, prep time, etc. (done)
+- Natural language queries: "I want a light, fast meal tonight. I have vegetables and rice at home." (not yet)
+- Shopping list generation from selected recipes (not yet)
+- Recipe scaling (adjust servings) (not yet)
 
-## Data Model (Supabase)
+## Data Model (Supabase - Deployed)
 ```
 recipes:
   - id (uuid, PK)
@@ -53,8 +62,27 @@ recipes:
   - image_url (text, nullable) — stored in Supabase Storage
   - source_url (text, nullable) — original link
   - source_type (text) — "image", "video", "link", "manual"
+  - fts (tsvector) — generated full-text search column
   - created_at (timestamptz)
   - updated_at (timestamptz)
+```
+
+## Project Structure
+```
+├── .env                          (secrets — gitignored)
+├── .env.example                  (template with dummy values)
+├── .mcp.json                     (MCP server config — gitignored)
+├── supabase/migrations/          (SQL migrations)
+├── frontend/                     (React + Vite)
+│   └── src/
+│       ├── lib/supabase.js       (Supabase JS client)
+│       └── components/           (RecipeForm, RecipeList, RecipeCard, RecipeIngest)
+└── backend/                      (FastAPI)
+    └── app/
+        ├── main.py               (app entry, CORS, routers)
+        ├── config.py             (pydantic-settings)
+        ├── routers/              (recipes.py, ingestion.py)
+        └── services/             (ai_parser.py, scraper.py)
 ```
 
 ## What Supabase Provides Out of the Box
@@ -68,18 +96,10 @@ recipes:
 - Supabase JS client for frontend
 
 ## What Needs Custom Building
-- **Recipe parsing pipeline** (Python): OCR, video transcript extraction, web scraping, AI-based structuring
+- **Recipe parsing pipeline** (Python): web scraping, AI-based structuring via Gemini
 - **AI consultation logic** (Python): ingredient matching, recipe recommendation, natural language query handling
 - **React frontend**: recipe cards, ingestion UI, consultation chat, filter/search interface
 - **Image handling**: upload flow from phone camera/gallery to Supabase Storage
-- **Video processing**: extracting useful info from Instagram/YouTube links (yt-dlp for metadata, whisper or transcript APIs)
-
-## Tech Decisions to Make
-- FastAPI vs Flask for the Python backend
-- Hosting for the Python backend (Supabase Edge Functions are Deno-only, so Python needs separate hosting — e.g., Railway, Fly.io, or a VPS)
-- How to handle video content (store video URL + extracted text, or attempt frame extraction?)
-- Auth strategy (Supabase Auth is fine for single-user, but consider future sharing)
-- PWA vs native-like wrapper for mobile experience
 
 ## Testing
 - Cover main functionality with meaningful tests — don't aim for 100% coverage
@@ -87,11 +107,11 @@ recipes:
 - Skip trivial tests (getters, simple renders) unless they guard against real regressions
 
 ## env file
--  you do not have access to my env file
+- you do not have access to my env file
 - the env.example file is an exact replica of my env file only there are dummy values included. Whenever you would change the env file make the changes in the .env.example file
 
 ## Repository
-- Hosted on **GitHub**
+- Hosted on **GitHub** (private): https://github.com/xSpaceCoder/AI_Daily_Brief
 - Never commit code without showing me the changes first
 
 ## Guidance Rules

@@ -4,23 +4,36 @@ import { supabase } from '../lib/supabase'
 const CATEGORIES = ['dinner', 'cake', 'dessert', 'soup/stew', 'breakfast', 'snack']
 const SEASONS = ['spring', 'summer', 'autumn', 'winter', 'all']
 const COMMON_TAGS = ['vegetarian', 'vegan', 'gluten-free', 'light', 'cozy', 'fiber-rich', 'quick', 'meal-prep']
+const SOURCE_TYPES = ['manual', 'link', 'video', 'image']
 
-function RecipeForm({ onSaved }) {
+function RecipeForm({ onSaved, recipe }) {
+  const isEdit = Boolean(recipe)
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    servings: '',
-    prep_time_minutes: '',
-    cook_time_minutes: '',
-    bake_time_minutes: '',
-    category: '',
-    season: ['all'],
-    tags: [],
-    ingredients: [{ name: '', quantity: '', unit: '' }],
-    instructions: [''],
+    title: recipe?.title || '',
+    description: recipe?.description || '',
+    servings: recipe?.servings?.toString() || '',
+    prep_time_minutes: recipe?.prep_time_minutes?.toString() || '',
+    cook_time_minutes: recipe?.cook_time_minutes?.toString() || '',
+    bake_time_minutes: recipe?.bake_time_minutes?.toString() || '',
+    chill_time_minutes: recipe?.chill_time_minutes?.toString() || '',
+    freeze_time_minutes: recipe?.freeze_time_minutes?.toString() || '',
+    category: recipe?.category || '',
+    season: recipe?.season || ['all'],
+    tags: recipe?.tags || [],
+    rating: recipe?.rating?.toString() || '',
+    source_url: recipe?.source_url || '',
+    source_type: recipe?.source_type || 'manual',
+    ingredients: recipe?.ingredients?.length > 0
+      ? recipe.ingredients
+      : [{ name: '', quantity: '', unit: '' }],
+    instructions: recipe?.instructions?.length > 0
+      ? recipe.instructions
+      : [''],
   })
+  const [customTag, setCustomTag] = useState('')
 
   const updateField = (field, value) => {
     setForm(f => ({ ...f, [field]: value }))
@@ -33,6 +46,14 @@ function RecipeForm({ onSaved }) {
         ? f.tags.filter(t => t !== tag)
         : [...f.tags, tag]
     }))
+  }
+
+  const addCustomTag = () => {
+    const tag = customTag.trim().toLowerCase()
+    if (tag && !form.tags.includes(tag)) {
+      setForm(f => ({ ...f, tags: [...f.tags, tag] }))
+    }
+    setCustomTag('')
   }
 
   const toggleSeason = (s) => {
@@ -77,27 +98,85 @@ function RecipeForm({ onSaved }) {
     setForm(f => ({ ...f, instructions: f.instructions.filter((_, i) => i !== index) }))
   }
 
+  const validate = () => {
+    if (!form.title.trim()) return 'Title is required.'
+    if (form.servings && (parseInt(form.servings) < 1 || isNaN(parseInt(form.servings)))) {
+      return 'Servings must be a positive number.'
+    }
+    if (form.rating && (parseInt(form.rating) < 1 || parseInt(form.rating) > 5)) {
+      return 'Rating must be between 1 and 5.'
+    }
+    const timeFields = ['prep_time_minutes', 'cook_time_minutes', 'bake_time_minutes', 'chill_time_minutes', 'freeze_time_minutes']
+    for (const field of timeFields) {
+      if (form[field] && (parseInt(form[field]) < 0 || isNaN(parseInt(form[field])))) {
+        return `${field.replace(/_/g, ' ').replace(' minutes', '')} must be a non-negative number.`
+      }
+    }
+    if (form.source_url && form.source_type === 'manual') {
+      return 'If you add a source URL, please also select the source type (link or video).'
+    }
+    if (form.source_url && !isValidUrl(form.source_url)) {
+      return 'Source URL must be a valid URL (starting with http:// or https://).'
+    }
+    const validIngredients = form.ingredients.filter(i => i.name.trim())
+    if (validIngredients.length === 0) return 'Add at least one ingredient.'
+    const validInstructions = form.instructions.filter(i => i.trim())
+    if (validInstructions.length === 0) return 'Add at least one instruction step.'
+    return null
+  }
+
+  const isValidUrl = (str) => {
+    try {
+      const url = new URL(str)
+      return url.protocol === 'http:' || url.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const validationError = validate()
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     setSaving(true)
     setError(null)
 
-    const recipe = {
+    const recipeData = {
       title: form.title.trim(),
       description: form.description.trim() || null,
       servings: form.servings ? parseInt(form.servings) : null,
       prep_time_minutes: form.prep_time_minutes ? parseInt(form.prep_time_minutes) : null,
       cook_time_minutes: form.cook_time_minutes ? parseInt(form.cook_time_minutes) : null,
       bake_time_minutes: form.bake_time_minutes ? parseInt(form.bake_time_minutes) : null,
+      chill_time_minutes: form.chill_time_minutes ? parseInt(form.chill_time_minutes) : null,
+      freeze_time_minutes: form.freeze_time_minutes ? parseInt(form.freeze_time_minutes) : null,
       category: form.category || null,
       season: form.season,
       tags: form.tags,
+      rating: form.rating ? parseInt(form.rating) : null,
+      source_url: form.source_url.trim() || null,
+      source_type: form.source_type,
       ingredients: form.ingredients.filter(i => i.name.trim()),
       instructions: form.instructions.filter(i => i.trim()),
-      source_type: 'manual',
     }
 
-    const { error: err } = await supabase.from('recipes').insert(recipe)
+    let err
+    if (isEdit) {
+      const { error: updateErr } = await supabase
+        .from('recipes')
+        .update(recipeData)
+        .eq('id', recipe.id)
+      err = updateErr
+    } else {
+      const { error: insertErr } = await supabase
+        .from('recipes')
+        .insert(recipeData)
+      err = insertErr
+    }
 
     if (err) {
       setError(err.message)
@@ -110,7 +189,7 @@ function RecipeForm({ onSaved }) {
 
   return (
     <form className="recipe-form" onSubmit={handleSubmit}>
-      <h2>Add Recipe</h2>
+      <h2>{isEdit ? 'Edit Recipe' : 'Add Recipe'}</h2>
 
       {error && <div className="error">{error}</div>}
 
@@ -154,13 +233,48 @@ function RecipeForm({ onSaved }) {
         </label>
       </div>
 
-      <label>
-        Category
-        <select value={form.category} onChange={e => updateField('category', e.target.value)}>
-          <option value="">Select...</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </label>
+      <div className="row">
+        <label>
+          Chill (min)
+          <input type="number" min="0" value={form.chill_time_minutes} onChange={e => updateField('chill_time_minutes', e.target.value)} />
+        </label>
+        <label>
+          Freeze (min)
+          <input type="number" min="0" value={form.freeze_time_minutes} onChange={e => updateField('freeze_time_minutes', e.target.value)} />
+        </label>
+        <label>
+          Rating (1-5)
+          <input type="number" min="1" max="5" value={form.rating} onChange={e => updateField('rating', e.target.value)} />
+        </label>
+        <label>
+          Category
+          <select value={form.category} onChange={e => updateField('category', e.target.value)}>
+            <option value="">Select...</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </label>
+      </div>
+
+      <fieldset>
+        <legend>Source</legend>
+        <div className="row">
+          <label>
+            Source Type
+            <select value={form.source_type} onChange={e => updateField('source_type', e.target.value)}>
+              {SOURCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
+          <label style={{ gridColumn: 'span 3' }}>
+            Source URL
+            <input
+              type="url"
+              value={form.source_url}
+              onChange={e => updateField('source_url', e.target.value)}
+              placeholder="https://..."
+            />
+          </label>
+        </div>
+      </fieldset>
 
       <fieldset>
         <legend>Season</legend>
@@ -191,11 +305,31 @@ function RecipeForm({ onSaved }) {
               {tag}
             </button>
           ))}
+          {form.tags.filter(t => !COMMON_TAGS.includes(t)).map(tag => (
+            <button
+              type="button"
+              key={tag}
+              className="chip selected"
+              onClick={() => toggleTag(tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+        <div className="custom-tag-row">
+          <input
+            type="text"
+            placeholder="Add custom tag..."
+            value={customTag}
+            onChange={e => setCustomTag(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag() } }}
+          />
+          <button type="button" className="add-btn" onClick={addCustomTag}>+</button>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>Ingredients</legend>
+        <legend>Ingredients *</legend>
         {form.ingredients.map((ing, i) => (
           <div key={i} className="ingredient-row">
             <input
@@ -224,7 +358,7 @@ function RecipeForm({ onSaved }) {
       </fieldset>
 
       <fieldset>
-        <legend>Instructions</legend>
+        <legend>Instructions *</legend>
         {form.instructions.map((step, i) => (
           <div key={i} className="instruction-row">
             <span className="step-num">{i + 1}.</span>
@@ -243,7 +377,7 @@ function RecipeForm({ onSaved }) {
       </fieldset>
 
       <button type="submit" className="submit-btn" disabled={saving}>
-        {saving ? 'Saving...' : 'Save Recipe'}
+        {saving ? 'Saving...' : isEdit ? 'Update Recipe' : 'Save Recipe'}
       </button>
     </form>
   )

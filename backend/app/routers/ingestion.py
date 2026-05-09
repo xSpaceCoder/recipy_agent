@@ -1,12 +1,25 @@
 import logging
+import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
+from supabase import create_client
+from app.config import get_settings
 from app.services.ai_parser import parse_recipe_from_text, parse_recipe_from_images, parse_recipe_from_video
 from app.services.scraper import scrape_webpage
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ingest", tags=["ingestion"])
+
+
+def _get_supabase():
+    settings = get_settings()
+    return create_client(settings.supabase_url, settings.supabase_service_role_key)
+
+
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
 
 
 class UrlRequest(BaseModel):
@@ -33,6 +46,7 @@ async def ingest_from_url(request: UrlRequest):
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "link"
+    recipe["source_accessed_at"] = _now_iso()
     return recipe
 
 
@@ -52,6 +66,7 @@ async def ingest_from_youtube(request: UrlRequest):
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "video"
+    recipe["source_accessed_at"] = _now_iso()
     logger.info(f"Successfully parsed recipe: {recipe.get('title', 'unknown')}")
     return recipe
 
@@ -66,7 +81,7 @@ async def ingest_from_image(files: list[UploadFile] = File(...)):
         if not f.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail=f"File {f.filename} is not an image")
         data = await f.read()
-        images.append({"mime_type": f.content_type, "data": data})
+        images.append({"mime_type": f.content_type, "data": data, "filename": f.filename})
 
     try:
         recipe = parse_recipe_from_images(images)
@@ -76,5 +91,24 @@ async def ingest_from_image(files: list[UploadFile] = File(...)):
     if "error" in recipe:
         raise HTTPException(status_code=422, detail=recipe["error"])
 
+    source_image_urls = _upload_source_images(images)
+
     recipe["source_type"] = "image"
+    recipe["source_accessed_at"] = _now_iso()
+    recipe["source_image_urls"] = source_image_urls
     return recipe
+
+
+def _upload_source_images(images: list[dict]) -> list[str]:
+    sb = _get_supabase()
+    settings = get_settings()
+    urls = []
+    for img in images:
+        ext = img["mime_type"].split("/")[-1]
+        path = f"{uuid.uuid4()}.{ext}"
+        sb.storage.from_("source-images").upload(
+            path, img["data"], {"content-type": img["mime_type"]}
+        )
+        public_url = f"{settings.supabase_url}/storage/v1/object/public/source-images/{path}"
+        urls.append(public_url)
+    return urls

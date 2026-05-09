@@ -205,8 +205,57 @@ body {
   margin-bottom: 4px;
 }
 
-.delete-btn {
+.source-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.source-section a {
+  color: var(--green);
+  text-decoration: underline;
+}
+
+.source-date {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.source-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.source-image {
+  width: 100%;
+  max-width: 280px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
   margin-top: 12px;
+}
+
+.edit-btn {
+  padding: 8px 16px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: var(--green-light);
+}
+
+.delete-btn {
   padding: 8px 16px;
   background: #dc3545;
   color: white;
@@ -214,6 +263,26 @@ body {
   border-radius: 8px;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.custom-tag-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.custom-tag-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.custom-tag-row .add-btn {
+  margin-top: 0;
+  padding: 8px 14px;
 }
 
 /* Form */

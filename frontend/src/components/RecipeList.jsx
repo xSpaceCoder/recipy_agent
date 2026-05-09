@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import RecipeCard from './RecipeCard'
 
-function RecipeList() {
+function RecipeList({ onEdit }) {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -88,7 +88,7 @@ function RecipeList() {
       ) : (
         <div className="recipe-grid">
           {recipes.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={recipe} onDelete={handleDelete} />
+            <RecipeCard key={recipe.id} recipe={recipe} onDelete={handleDelete} onEdit={onEdit} />
           ))}
         </div>
       )}
