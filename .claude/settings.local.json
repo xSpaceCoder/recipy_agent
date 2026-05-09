@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/GOEPPEA/.claude/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\GOEPPEA\\Documents\\AI_Playground\\.claude"
+    ]
+  }
+}
