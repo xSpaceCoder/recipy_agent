@@ -1,0 +1,31 @@
+{
+  "name": "Recipe Agent",
+  "short_name": "Recipes",
+  "description": "AI-powered recipe management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2d6a4f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "share_target": {
+    "action": "/ingest",
+    "method": "GET",
+    "params": {
+      "url": "url",
+      "text": "text",
+      "title": "title"
+    }
+  }
+}
