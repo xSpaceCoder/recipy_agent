@@ -5,6 +5,12 @@
     ],
     "additionalDirectories": [
       "c:\\Users\\GOEPPEA\\Documents\\AI_Playground\\.claude"
+    ],
+    "deny": [
+      "Read(/.env)",
+      "Read(./secrets/**)",
+      "Read(./config/credentials.json)",
+      "Read(./build)"
     ]
   }
 }

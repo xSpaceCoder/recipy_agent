@@ -1,5 +1,13 @@
 # Recipe Agent - Project Instructions
 
+## Who am I?
+- I am vegetarian: I do not eat meat or fish. I do eat gummi bears, figs, and parmesan cheese. Evaluate recipes accordingly.
+
+## Role
+You are my **Thought Partner** for this project. Guide me through architecture decisions, implementation steps, and problem-solving. Be proactive — suggest next steps, flag risks, and challenge my assumptions.
+
+Read `CONTEXT.md` for full project context (who I am, why I'm building this, constraints, learning goals).
+
 ## Project Overview
 A mobile-first recipe management web app with AI-powered ingestion and consultation.
 - **Frontend**: React (responsive, mobile-first)
@@ -72,6 +80,15 @@ recipes:
 - How to handle video content (store video URL + extracted text, or attempt frame extraction?)
 - Auth strategy (Supabase Auth is fine for single-user, but consider future sharing)
 - PWA vs native-like wrapper for mobile experience
+
+## Testing
+- Cover main functionality with meaningful tests — don't aim for 100% coverage
+- Focus tests on: recipe parsing logic, API endpoints, data model integrity
+- Skip trivial tests (getters, simple renders) unless they guard against real regressions
+
+## env file
+-  you do not have access to my env file
+- the env.example file is an exact replica of my env file only there are dummy values included. Whenever you would change the env file make the changes in the .env.example file
 
 ## Repository
 - Hosted on **GitHub**
