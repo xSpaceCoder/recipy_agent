@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import RecipeForm from './components/RecipeForm'
+import RecipeIngest from './components/RecipeIngest'
 import RecipeList from './components/RecipeList'
 
 function App() {
@@ -23,15 +24,22 @@ function App() {
             Recipes
           </button>
           <button
+            className={view === 'import' ? 'active' : ''}
+            onClick={() => setView('import')}
+          >
+            Import
+          </button>
+          <button
             className={view === 'add' ? 'active' : ''}
             onClick={() => setView('add')}
           >
-            + Add
+            + Manual
           </button>
         </nav>
       </header>
       <main>
         {view === 'list' && <RecipeList key={refreshKey} />}
+        {view === 'import' && <RecipeIngest onSaved={handleRecipeSaved} />}
         {view === 'add' && <RecipeForm onSaved={handleRecipeSaved} />}
       </main>
     </div>

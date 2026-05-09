@@ -1,16 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/GOEPPEA/.claude/**)"
-    ],
-    "additionalDirectories": [
-      "c:\\Users\\GOEPPEA\\Documents\\AI_Playground\\.claude"
+      "Read(//c/Users/GOEPPEA/.claude/**)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__apply_migration"
     ],
     "deny": [
       "Read(/.env)",
       "Read(./secrets/**)",
       "Read(./config/credentials.json)",
       "Read(./build)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\GOEPPEA\\Documents\\AI_Playground\\.claude"
     ]
   }
 }

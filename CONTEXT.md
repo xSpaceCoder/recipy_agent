@@ -24,12 +24,13 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 ## Tech Stack (Planned)
 | Layer | Technology | Status |
 |-------|-----------|--------|
-| Frontend | React (mobile-first) | Not started |
-| Backend | Python (FastAPI or Flask) | Not started |
-| Database | Supabase (PostgreSQL + Auth + Storage) | Not started |
-| AI | Claude API | Not started |
-| Repo | GitHub | Not started |
+| Frontend | React (mobile-first) | Started |
+| Backend | Python (FastAPI or Flask) | Started |
+| Database | Supabase (PostgreSQL + Auth + Storage) url stored in env | Started |
+| AI | Google AI Studio API (key stored in env) | Started |
+| Provate Repo | GitHub: https://github.com/xSpaceCoder/AI_Daily_Brief | Started |
 | Dev tool | Claude Code (Opus 4.6) in VS Code | Active |
+
 
 ## Learning Goals
 - Build a full-stack app end-to-end with agentic coding assistance
