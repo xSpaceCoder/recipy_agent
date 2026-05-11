@@ -1,12 +1,12 @@
 # Project Context
 
-## Status: Greenfield
-Nothing is built yet. Only planning documents (markdown files) exist. No code, no database, no deployed infrastructure.
+## Status: First Slice Working
+Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured.
 
 ## Who
 - **Developer**: Solo — one person, no team
 - **Purpose**: Personal education and interest. This is not a commercial product. I want to learn by building, explore agentic coding workflows, and end up with something genuinely useful for my own kitchen.
-- **Users**: Just me (single-user app)
+- **Users**: Me and my boyfriend (two-user app via Supabase Auth)
 
 ## Domain: Recipe Management
 I cook regularly — casual dinners at home and cakes/desserts I bring to friends. My recipes are currently scattered across:
@@ -28,7 +28,8 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 | Backend | Python (FastAPI or Flask) | Started |
 | Database | Supabase (PostgreSQL + Auth + Storage) url stored in env | Started |
 | AI | Google AI Studio API (key stored in env) | Started |
-| Provate Repo | GitHub: https://github.com/xSpaceCoder/AI_Daily_Brief | Started |
+| Hosting | Vercel (free tier, CI/CD via GitHub) | Configured |
+| Private Repo | GitHub: https://github.com/xSpaceCoder/AI_Daily_Brief | Active |
 | Dev tool | Claude Code (Opus 4.6) in VS Code | Active |
 
 
@@ -42,5 +43,11 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 ## Constraints
 - Solo developer, limited time — favor simplicity and "good enough" over perfection
 - Behind corporate proxy — package installs may require VPN disconnect
-- No budget for expensive hosting — prefer free tiers (Supabase free, Vercel/Railway free tier, etc.)
-- Single-user, no need for multi-tenancy or complex auth flows
+- No budget for expensive hosting — prefer free tiers (Supabase free, Vercel free tier)
+- Two users (me + boyfriend), simple auth via Supabase Auth — no multi-tenancy needed
+
+## Deployment
+- **Frontend hosting**: Vercel (free tier) — auto-deploys on `git push` to `main`, preview URLs for PRs
+- **PWA**: Installable on phones, offline caching via service worker, Web Share Target API (share recipes from browser/YouTube directly to the app)
+- **Backend hosting**: TBD (Vercel serverless functions, Railway, or Fly.io free tier)
+- **CI/CD**: Vercel's built-in GitHub integration — zero-config

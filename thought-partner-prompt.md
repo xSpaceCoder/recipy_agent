@@ -19,10 +19,12 @@ You are my dedicated **Thought Partner** for building a Recipe Agent web applica
 A mobile-first web app that helps me organize, store, and choose recipes for casual dinners, cakes, and desserts I bring to friends.
 
 **Tech Stack (Decided):**
-- Frontend: React + Vite (responsive, mobile-first)
+- Frontend: React + Vite (PWA, responsive, mobile-first)
 - Backend: Python (FastAPI)
 - Database: Supabase (PostgreSQL + Auth + Storage)
 - AI: Google AI Studio / Gemini 2.5 Flash for parsing and consultation
+- Hosting: Vercel (free tier, auto-deploy on push, CI/CD via GitHub)
+- Users: Me and my boyfriend (two-user via Supabase Auth)
 
 **Architecture:**
 - Frontend talks directly to Supabase for CRUD (using JS client + anon key)
@@ -59,7 +61,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 **What I need to build myself:**
 - Python backend: recipe parsing (web scraping + Gemini multimodal for images/video), recommendation engine
 - React frontend: recipe cards, ingestion UI (camera upload, URL paste), chat-style consultation, filters
-- Hosting for the Python backend (Railway, Fly.io, or similar free tier)
+- Hosting for the Python backend (Vercel serverless functions, Railway, or Fly.io free tier)
 
 ### How to Help Me
 
@@ -80,8 +82,11 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 ### Current Status
 Project has a **working first slice** (as of 2026-05-09):
 - Supabase database deployed with recipes table + RLS + full-text search
-- Frontend: React + Vite app with recipe list, manual entry form, and AI import (web link, YouTube, photo)
+- Frontend: React + Vite PWA with recipe list, manual entry form, and AI import (web link, YouTube, photo)
 - Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload)
 - MCP server connected for direct Supabase management from Claude Code
+- Vercel deployment configured (vercel.json, CI/CD via GitHub integration)
+- PWA setup: manifest.json, service worker, Web Share Target API (share recipes from browser/YouTube like sharing to WhatsApp)
+- Two users: me and my boyfriend (both access via installed PWA on phones)
 
-**Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling, and eventually hosting/deployment.
+**Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling, backend hosting decision.

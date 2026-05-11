@@ -9,11 +9,13 @@ You are my **Thought Partner** for this project. Guide me through architecture d
 Read `CONTEXT.md` for full project context (who I am, why I'm building this, constraints, learning goals).
 
 ## Project Overview
-A mobile-first recipe management web app with AI-powered ingestion and consultation.
-- **Frontend**: React + Vite (responsive, mobile-first)
+A mobile-first recipe management PWA with AI-powered ingestion and consultation.
+- **Frontend**: React + Vite (PWA, responsive, mobile-first)
 - **Backend**: Python (FastAPI)
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
 - **AI**: Google AI Studio (Gemini 2.5 Flash) for recipe parsing, tagging, and consultation
+- **Hosting**: Vercel (free tier, auto-deploy on push via GitHub CI/CD)
+- **Users**: Me and my boyfriend (two-user app via Supabase Auth)
 
 ## Architecture Decisions (Resolved)
 - **FastAPI** chosen for the Python backend
@@ -23,6 +25,8 @@ A mobile-first recipe management web app with AI-powered ingestion and consultat
 - **Image processing**: Send images directly to Gemini (multimodal, no separate OCR)
 - **Web scraping**: httpx + BeautifulSoup to extract text, then Gemini parses it
 - **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
+- **Hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
+- **PWA**: Installable on phones, service worker for offline caching, Web Share Target API for sharing recipes directly from browser/YouTube (like sharing to WhatsApp)
 
 ## Core Features
 
@@ -72,8 +76,14 @@ recipes:
 ├── .env                          (secrets — gitignored)
 ├── .env.example                  (template with dummy values)
 ├── .mcp.json                     (MCP server config — gitignored)
+├── vercel.json                   (Vercel deployment config — build + SPA routing)
 ├── supabase/migrations/          (SQL migrations)
-├── frontend/                     (React + Vite)
+├── frontend/                     (React + Vite PWA)
+│   ├── index.html                (links manifest, registers service worker)
+│   ├── public/
+│   │   ├── manifest.json         (PWA manifest + share_target config)
+│   │   ├── sw.js                 (service worker — offline caching)
+│   │   └── icons/                (PWA icons: 192px, 512px)
 │   └── src/
 │       ├── lib/supabase.js       (Supabase JS client)
 │       └── components/           (RecipeForm, RecipeList, RecipeCard, RecipeIngest)
