@@ -25,7 +25,9 @@ jobs:
           region: europe-west1
 
       - name: Set environment variables
+        env:
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
         run: |
           gcloud run services update recipe-agent-api \
             --region=europe-west1 \
-            --update-env-vars="ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}"
+            --update-env-vars="ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
