@@ -9,14 +9,14 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon/favicon.jfif",
+      "src": "/icon/favicon.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png"
     },
     {
-      "src": "/icon/favicon.jfif",
+      "src": "/icon/favicon.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png"
     }
   ],
   "share_target": {
