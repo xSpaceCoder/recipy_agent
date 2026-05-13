@@ -1,12 +1,18 @@
 import { useState } from 'react'
+import { AuthProvider, useAuth } from './lib/useAuth'
+import LoginPage from './components/LoginPage'
 import RecipeForm from './components/RecipeForm'
 import RecipeIngest from './components/RecipeIngest'
 import RecipeList from './components/RecipeList'
 
-function App() {
+function AppContent() {
+  const { user, loading, signOut } = useAuth()
   const [view, setView] = useState('list')
   const [refreshKey, setRefreshKey] = useState(0)
   const [editingRecipe, setEditingRecipe] = useState(null)
+
+  if (loading) return <div className="status">Loading...</div>
+  if (!user) return <LoginPage />
 
   const handleRecipeSaved = () => {
     setRefreshKey(k => k + 1)
@@ -42,6 +48,9 @@ function App() {
           >
             + Manual
           </button>
+          <button className="sign-out-btn" onClick={signOut}>
+            Sign Out
+          </button>
         </nav>
       </header>
       <main>
@@ -53,6 +62,14 @@ function App() {
         )}
       </main>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 

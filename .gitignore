@@ -8,3 +8,4 @@ venv/
 .mcp.json
 .claude/settings.local.json
 gcp-key.json
+.vscode/

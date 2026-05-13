@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/useAuth'
 import RecipeCard from './RecipeCard'
 
 function RecipeList({ onEdit }) {
+  const { user } = useAuth()
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -88,7 +90,7 @@ function RecipeList({ onEdit }) {
       ) : (
         <div className="recipe-grid">
           {recipes.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={recipe} onDelete={handleDelete} onEdit={onEdit} />
+            <RecipeCard key={recipe.id} recipe={recipe} onDelete={handleDelete} onEdit={onEdit} isOwner={recipe.user_id === user?.id} />
           ))}
         </div>
       )}

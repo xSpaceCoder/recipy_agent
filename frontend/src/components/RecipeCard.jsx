@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function RecipeCard({ recipe, onDelete, onEdit }) {
+function RecipeCard({ recipe, onDelete, onEdit, isOwner }) {
   const [expanded, setExpanded] = useState(false)
 
   const totalTime = [
@@ -30,7 +30,7 @@ function RecipeCard({ recipe, onDelete, onEdit }) {
       <div className="card-meta">
         {totalTime > 0 && <span>{totalTime} min</span>}
         {recipe.servings && <span>{recipe.servings} servings</span>}
-        {recipe.rating && <span>{'★'.repeat(recipe.rating)}{'☆'.repeat(5 - recipe.rating)}</span>}
+        {isOwner && recipe.rating && <span>{'★'.repeat(recipe.rating)}{'☆'.repeat(5 - recipe.rating)}</span>}
       </div>
 
       {recipe.tags?.length > 0 && (
@@ -95,26 +95,28 @@ function RecipeCard({ recipe, onDelete, onEdit }) {
             </div>
           )}
 
-          <div className="card-actions">
-            <button
-              className="edit-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                onEdit(recipe)
-              }}
-            >
-              Edit Recipe
-            </button>
-            <button
-              className="delete-btn"
-              onClick={(e) => {
-                e.stopPropagation()
-                if (confirm('Delete this recipe?')) onDelete(recipe.id)
-              }}
-            >
-              Delete Recipe
-            </button>
-          </div>
+          {isOwner && (
+            <div className="card-actions">
+              <button
+                className="edit-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(recipe)
+                }}
+              >
+                Edit Recipe
+              </button>
+              <button
+                className="delete-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (confirm('Delete this recipe?')) onDelete(recipe.id)
+                }}
+              >
+                Delete Recipe
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

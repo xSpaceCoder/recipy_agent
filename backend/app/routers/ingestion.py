@@ -1,10 +1,11 @@
 import logging
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from supabase import create_client
 from app.config import get_settings
+from app.auth import get_current_user
 from app.services.ai_parser import parse_recipe_from_text, parse_recipe_from_images, parse_recipe_from_video
 from app.services.scraper import scrape_webpage, extract_image_url
 
@@ -27,7 +28,7 @@ class UrlRequest(BaseModel):
 
 
 @router.post("/url")
-async def ingest_from_url(request: UrlRequest):
+async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_user)):
     try:
         content = await scrape_webpage(request.url)
     except Exception as e:
@@ -58,7 +59,7 @@ async def ingest_from_url(request: UrlRequest):
 
 
 @router.post("/youtube")
-async def ingest_from_youtube(request: UrlRequest):
+async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_current_user)):
     logger.info(f"YouTube ingestion request for: {request.url}")
 
     try:
@@ -83,7 +84,7 @@ async def ingest_from_youtube(request: UrlRequest):
 
 
 @router.post("/image")
-async def ingest_from_image(files: list[UploadFile] = File(...)):
+async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = Depends(get_current_user)):
     if not files:
         raise HTTPException(status_code=400, detail="No images provided")
 

@@ -16,7 +16,7 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **AI**: Google AI Studio (Gemini 2.5 Flash) for recipe parsing, tagging, and consultation
 - **Frontend Hosting**: Vercel (free tier, auto-deploy on push via GitHub CI/CD)
 - **Backend Hosting**: Google Cloud Run (free tier, europe-west1, containerized FastAPI)
-- **Users**: Me and my boyfriend (two-user app via Supabase Auth)
+- **Users**: me and friends/family
 
 ## Architecture Decisions (Resolved)
 - **FastAPI** chosen for the Python backend
@@ -29,6 +29,9 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Frontend hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
 - **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**`
 - **PWA**: Installable on phones, service worker for offline caching, Web Share Target API for sharing recipes directly from browser/YouTube (like sharing to WhatsApp)
+- **Auth**: Supabase Auth with Google OAuth + Email magic link; full-screen login page gates the app
+- **Multi-user model**: Each recipe has a `user_id` (owner) and `visibility` (public/private). Users see own recipes + public recipes from others. Rating and edit/delete are owner-only.
+- **Backend auth**: All API endpoints verify Supabase JWT via `Authorization: Bearer` header; service role key used for DB access with manual user-scoping
 
 ## Core Features
 
@@ -51,6 +54,7 @@ The agent estimates missing metadata (prep time, dietary tags, etc.) when not ex
 ```
 recipes:
   - id (uuid, PK)
+  - user_id (uuid, FK → auth.users, NOT NULL) — recipe owner
   - title (text)
   - description (text)
   - ingredients (jsonb) — [{name, quantity, unit}]
@@ -64,7 +68,8 @@ recipes:
   - tags (text[]) — ["vegetarian", "vegan", "gluten-free", "light", "cozy", "fiber-rich", ...]
   - category (text) — "dinner", "cake", "dessert", "soup/stew"
   - season (text[]) — ["spring", "summer", "autumn", "winter", "all"]
-  - rating (int, nullable) — 1-5 personal rating
+  - rating (int, nullable) — 1-5 personal rating (only visible to owner)
+  - visibility (text, NOT NULL, default 'public') — 'public' or 'private'
   - image_url (text, nullable) — stored in Supabase Storage
   - source_url (text, nullable) — original link
   - source_type (text) — "image", "video", "link", "manual"
@@ -90,13 +95,15 @@ recipes:
 │   │   └── icons/                (PWA icons: 192px, 512px)
 │   └── src/
 │       ├── lib/supabase.js       (Supabase JS client)
-│       └── components/           (RecipeForm, RecipeList, RecipeCard, RecipeIngest)
+│       ├── lib/useAuth.jsx       (Auth context + hook — session, sign out)
+│       └── components/           (LoginPage, RecipeForm, RecipeList, RecipeCard, RecipeIngest)
 └── backend/                      (FastAPI, containerized for Cloud Run)
     ├── Dockerfile                (Python 3.11-slim, uvicorn on port 8080)
     ├── .dockerignore             (excludes .env, __pycache__, venv)
     └── app/
         ├── main.py               (app entry, CORS via ALLOWED_ORIGINS env var, routers)
         ├── config.py             (pydantic-settings)
+        ├── auth.py               (JWT verification dependency via Supabase get_user)
         ├── routers/              (recipes.py, ingestion.py)
         └── services/             (ai_parser.py, scraper.py)
 ```

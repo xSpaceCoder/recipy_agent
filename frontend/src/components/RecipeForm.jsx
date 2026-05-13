@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/useAuth'
 
 const CATEGORIES = ['dinner', 'cake', 'dessert', 'soup/stew', 'breakfast', 'snack']
 const SEASONS = ['spring', 'summer', 'autumn', 'winter', 'all']
@@ -7,10 +8,13 @@ const COMMON_TAGS = ['vegetarian', 'vegan', 'gluten-free', 'light', 'cozy', 'fib
 const SOURCE_TYPES = ['manual', 'link', 'video', 'image']
 
 function RecipeForm({ onSaved, recipe }) {
+  const { user } = useAuth()
   const isEdit = Boolean(recipe)
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const isOwner = !isEdit || recipe?.user_id === user?.id
+
   const [form, setForm] = useState({
     title: recipe?.title || '',
     description: recipe?.description || '',
@@ -24,6 +28,7 @@ function RecipeForm({ onSaved, recipe }) {
     season: recipe?.season || ['all'],
     tags: recipe?.tags || [],
     rating: recipe?.rating?.toString() || '',
+    visibility: recipe?.visibility || 'public',
     source_url: recipe?.source_url || '',
     source_type: recipe?.source_type || 'manual',
     ingredients: recipe?.ingredients?.length > 0
@@ -158,6 +163,7 @@ function RecipeForm({ onSaved, recipe }) {
       season: form.season,
       tags: form.tags,
       rating: form.rating ? parseInt(form.rating) : null,
+      visibility: form.visibility,
       source_url: form.source_url.trim() || null,
       source_type: form.source_type,
       ingredients: form.ingredients.filter(i => i.name.trim()),
@@ -172,6 +178,7 @@ function RecipeForm({ onSaved, recipe }) {
         .eq('id', recipe.id)
       err = updateErr
     } else {
+      recipeData.user_id = user.id
       const { error: insertErr } = await supabase
         .from('recipes')
         .insert(recipeData)
@@ -242,10 +249,12 @@ function RecipeForm({ onSaved, recipe }) {
           Freeze (min)
           <input type="number" min="0" value={form.freeze_time_minutes} onChange={e => updateField('freeze_time_minutes', e.target.value)} />
         </label>
-        <label>
-          Rating (1-5)
-          <input type="number" min="1" max="5" value={form.rating} onChange={e => updateField('rating', e.target.value)} />
-        </label>
+        {isOwner && (
+          <label>
+            Rating (1-5)
+            <input type="number" min="1" max="5" value={form.rating} onChange={e => updateField('rating', e.target.value)} />
+          </label>
+        )}
         <label>
           Category
           <select value={form.category} onChange={e => updateField('category', e.target.value)}>
@@ -275,6 +284,28 @@ function RecipeForm({ onSaved, recipe }) {
           </label>
         </div>
       </fieldset>
+
+      {isOwner && (
+        <fieldset>
+          <legend>Visibility</legend>
+          <div className="chip-group">
+            <button
+              type="button"
+              className={`chip ${form.visibility === 'public' ? 'selected' : ''}`}
+              onClick={() => updateField('visibility', 'public')}
+            >
+              Public
+            </button>
+            <button
+              type="button"
+              className={`chip ${form.visibility === 'private' ? 'selected' : ''}`}
+              onClick={() => updateField('visibility', 'private')}
+            >
+              Private
+            </button>
+          </div>
+        </fieldset>
+      )}
 
       <fieldset>
         <legend>Season</legend>

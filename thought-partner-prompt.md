@@ -25,7 +25,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - AI: Google AI Studio / Gemini 2.5 Flash for parsing and consultation
 - Frontend Hosting: Vercel (free tier, auto-deploy on push, CI/CD via GitHub)
 - Backend Hosting: Google Cloud Run (free tier, europe-west1, auto-deploy via GitHub Actions)
-- Users: Me and my boyfriend (two-user via Supabase Auth)
+- Users: me and friends/family (multi-user via Supabase Auth: Google OAuth + Email magic link)
 
 **Architecture:**
 - Frontend talks directly to Supabase for CRUD (using JS client + anon key)
@@ -34,6 +34,9 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - Web scraping uses httpx + BeautifulSoup, then Gemini parses the text
 - AI converts American units to metric; common EU measurements (tbsp, tsp) are kept
 - AI outputs recipe text in German or English; tags are English-only
+- Auth: Supabase Auth (Google OAuth + Email magic link), full-screen login page gates the app
+- Multi-user: each recipe has user_id (owner) + visibility (public/private). Users see own + public recipes. Rating and edit/delete are owner-only.
+- Backend verifies Supabase JWT on all endpoints; manual user-scoping since service role key bypasses RLS
 
 **Two Core Functions:**
 
@@ -42,18 +45,20 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 2. **Recipe Consultation** (Partially implemented) — Browse, filter, and search my recipe collection. Answer natural language queries like "I want a light, fast meal tonight, I have vegetables and rice at home." Generate shopping lists. Scale recipes.
 
 **Recipe Data Fields:**
+- user_id (owner), visibility (public/private)
 - Title, description, ingredients (with quantities in metric), step-by-step instructions
 - Servings, prep time, cook time, bake time
 - Tags: vegetarian, vegan, gluten-free, fiber-rich, light, cozy, quick, meal-prep, etc.
 - Category: dinner, cake, dessert, soup/stew, breakfast, snack
 - Season: spring, summer, autumn, winter, all
-- Personal rating (1-5, optional)
+- Personal rating (1-5, optional, owner-only)
 - Image, source URL, source type
 - Full-text search (auto-generated tsvector column)
 
 **What Supabase gives me for free:**
 - PostgreSQL database + auto-generated REST API
-- Auth (single-user for now)
+- Auth (Google OAuth + Email magic link, multi-user)
+- Row Level Security (per-user recipe isolation + public sharing)
 - File Storage (recipe images)
 - Full-text search
 - Realtime subscriptions
@@ -80,13 +85,15 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 7. **Ask clarifying questions** — If my question is ambiguous, ask before guessing.
 
 ### Current Status
-Project has a **working first slice** (as of 2026-05-09):
-- Supabase database deployed with recipes table + RLS + full-text search
-- Frontend: React + Vite PWA with recipe list, manual entry form, and AI import (web link, YouTube, photo)
-- Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload)
+Project has **auth & multi-user implemented** (as of 2026-05-13):
+- Supabase database deployed with recipes table + RLS + full-text search + user ownership
+- Auth: Supabase Auth with Google OAuth + Email magic link, full-screen login page
+- Multi-user: per-user recipe ownership, public/private visibility toggle, rating owner-only
+- Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context
+- Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), JWT verification on all endpoints
 - MCP server connected for direct Supabase management from Claude Code
 - Vercel deployment configured (vercel.json, CI/CD via GitHub integration)
 - PWA setup: manifest.json, service worker, Web Share Target API (share recipes from browser/YouTube like sharing to WhatsApp)
-- Two users: me and my boyfriend (both access via installed PWA on phones)
+- Multiple users: me and friends/family (access via installed PWA on phones)
 
 **Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling.

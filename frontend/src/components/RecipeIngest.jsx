@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/useAuth'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function RecipeIngest({ onSaved }) {
+  const { user } = useAuth()
   const [mode, setMode] = useState('url')
   const [url, setUrl] = useState('')
   const [files, setFiles] = useState(null)
@@ -11,14 +13,22 @@ function RecipeIngest({ onSaved }) {
   const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {}
+  }
+
   const handleIngestUrl = async () => {
     setLoading(true)
     setError(null)
     try {
       const endpoint = mode === 'youtube' ? '/api/ingest/youtube' : '/api/ingest/url'
+      const authHeaders = await getAuthHeaders()
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({ url }),
       })
       if (!res.ok) {
@@ -43,8 +53,10 @@ function RecipeIngest({ onSaved }) {
       for (const file of files) {
         formData.append('files', file)
       }
+      const authHeaders = await getAuthHeaders()
       const res = await fetch(`${API_URL}/api/ingest/image`, {
         method: 'POST',
+        headers: { ...authHeaders },
         body: formData,
       })
       if (!res.ok) {
@@ -66,6 +78,7 @@ function RecipeIngest({ onSaved }) {
     setError(null)
 
     const { is_vegetarian, error: _err, ...recipeData } = preview
+    recipeData.user_id = user.id
     const { error: dbError } = await supabase.from('recipes').insert(recipeData)
 
     if (dbError) {

@@ -1,12 +1,12 @@
 # Project Context
 
-## Status: First Slice Working
-Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured.
+## Status: Auth & Multi-User Implemented
+Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured. Multi-user authentication (Google OAuth + Email magic link) with per-user recipe ownership and public/private visibility is implemented.
 
 ## Who
 - **Developer**: Solo — one person, no team
 - **Purpose**: Personal education and interest. This is not a commercial product. I want to learn by building, explore agentic coding workflows, and end up with something genuinely useful for my own kitchen.
-- **Users**: Me and my boyfriend (two-user app via Supabase Auth)
+- **Users**: Me + friends/family (multi-user via Supabase Auth with Google OAuth + Email magic link)
 
 ## Domain: Recipe Management
 I cook regularly — casual dinners at home and cakes/desserts I bring to friends. My recipes are currently scattered across:
@@ -45,7 +45,7 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 - Solo developer, limited time — favor simplicity and "good enough" over perfection
 - Behind corporate proxy — package installs may require VPN disconnect
 - No budget for expensive hosting — prefer free tiers (Supabase free, Vercel free tier)
-- Two users (me + boyfriend), simple auth via Supabase Auth — no multi-tenancy needed
+- Multiple users (me + friends/family) via Supabase Auth (Google OAuth + Email magic link), per-user recipe ownership with public/private visibility
 
 ## Deployment
 - **Frontend hosting**: Vercel (free tier) — auto-deploys on `git push` to `main`, preview URLs for PRs
