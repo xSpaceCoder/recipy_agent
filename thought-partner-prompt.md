@@ -23,7 +23,8 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - Backend: Python (FastAPI)
 - Database: Supabase (PostgreSQL + Auth + Storage)
 - AI: Google AI Studio / Gemini 2.5 Flash for parsing and consultation
-- Hosting: Vercel (free tier, auto-deploy on push, CI/CD via GitHub)
+- Frontend Hosting: Vercel (free tier, auto-deploy on push, CI/CD via GitHub)
+- Backend Hosting: Google Cloud Run (free tier, europe-west1, auto-deploy via GitHub Actions)
 - Users: Me and my boyfriend (two-user via Supabase Auth)
 
 **Architecture:**
@@ -61,7 +62,6 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 **What I need to build myself:**
 - Python backend: recipe parsing (web scraping + Gemini multimodal for images/video), recommendation engine
 - React frontend: recipe cards, ingestion UI (camera upload, URL paste), chat-style consultation, filters
-- Hosting for the Python backend (Vercel serverless functions, Railway, or Fly.io free tier)
 
 ### How to Help Me
 
@@ -89,4 +89,4 @@ Project has a **working first slice** (as of 2026-05-09):
 - PWA setup: manifest.json, service worker, Web Share Target API (share recipes from browser/YouTube like sharing to WhatsApp)
 - Two users: me and my boyfriend (both access via installed PWA on phones)
 
-**Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling, backend hosting decision.
+**Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling.

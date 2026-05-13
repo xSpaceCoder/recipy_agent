@@ -14,7 +14,8 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Backend**: Python (FastAPI)
 - **Database**: Supabase (PostgreSQL + Auth + Storage)
 - **AI**: Google AI Studio (Gemini 2.5 Flash) for recipe parsing, tagging, and consultation
-- **Hosting**: Vercel (free tier, auto-deploy on push via GitHub CI/CD)
+- **Frontend Hosting**: Vercel (free tier, auto-deploy on push via GitHub CI/CD)
+- **Backend Hosting**: Google Cloud Run (free tier, europe-west1, containerized FastAPI)
 - **Users**: Me and my boyfriend (two-user app via Supabase Auth)
 
 ## Architecture Decisions (Resolved)
@@ -25,7 +26,8 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Image processing**: Send images directly to Gemini (multimodal, no separate OCR)
 - **Web scraping**: httpx + BeautifulSoup to extract text, then Gemini parses it
 - **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
-- **Hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
+- **Frontend hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
+- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**`
 - **PWA**: Installable on phones, service worker for offline caching, Web Share Target API for sharing recipes directly from browser/YouTube (like sharing to WhatsApp)
 
 ## Core Features
@@ -77,6 +79,8 @@ recipes:
 ├── .env.example                  (template with dummy values)
 ├── .mcp.json                     (MCP server config — gitignored)
 ├── vercel.json                   (Vercel deployment config — build + SPA routing)
+├── .github/workflows/
+│   └── deploy-backend.yml        (GitHub Actions — auto-deploy backend to Cloud Run)
 ├── supabase/migrations/          (SQL migrations)
 ├── frontend/                     (React + Vite PWA)
 │   ├── index.html                (links manifest, registers service worker)
@@ -87,9 +91,11 @@ recipes:
 │   └── src/
 │       ├── lib/supabase.js       (Supabase JS client)
 │       └── components/           (RecipeForm, RecipeList, RecipeCard, RecipeIngest)
-└── backend/                      (FastAPI)
+└── backend/                      (FastAPI, containerized for Cloud Run)
+    ├── Dockerfile                (Python 3.11-slim, uvicorn on port 8080)
+    ├── .dockerignore             (excludes .env, __pycache__, venv)
     └── app/
-        ├── main.py               (app entry, CORS, routers)
+        ├── main.py               (app entry, CORS via ALLOWED_ORIGINS env var, routers)
         ├── config.py             (pydantic-settings)
         ├── routers/              (recipes.py, ingestion.py)
         └── services/             (ai_parser.py, scraper.py)

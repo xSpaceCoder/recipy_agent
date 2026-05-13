@@ -28,7 +28,8 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 | Backend | Python (FastAPI or Flask) | Started |
 | Database | Supabase (PostgreSQL + Auth + Storage) url stored in env | Started |
 | AI | Google AI Studio API (key stored in env) | Started |
-| Hosting | Vercel (free tier, CI/CD via GitHub) | Configured |
+| Frontend Hosting | Vercel (free tier, CI/CD via GitHub) | Configured |
+| Backend Hosting | Google Cloud Run (free tier, europe-west1) | Deployed |
 | Private Repo | GitHub: https://github.com/xSpaceCoder/AI_Daily_Brief | Active |
 | Dev tool | Claude Code (Opus 4.6) in VS Code | Active |
 
@@ -48,6 +49,8 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 
 ## Deployment
 - **Frontend hosting**: Vercel (free tier) — auto-deploys on `git push` to `main`, preview URLs for PRs
+- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — containerized FastAPI, auto-deploys via GitHub Actions on push to `backend/**`, manual trigger via `workflow_dispatch`
 - **PWA**: Installable on phones, offline caching via service worker, Web Share Target API (share recipes from browser/YouTube directly to the app)
-- **Backend hosting**: TBD (Vercel serverless functions, Railway, or Fly.io free tier)
-- **CI/CD**: Vercel's built-in GitHub integration — zero-config
+- **CI/CD**: Vercel GitHub integration for frontend; GitHub Actions + `google-github-actions/deploy-cloudrun@v2` for backend
+- **Backend env vars**: Set on Cloud Run directly (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_AI_API_KEY`, `ALLOWED_ORIGINS` using `|` as separator)
+- **CORS**: Managed via `ALLOWED_ORIGINS` env var on Cloud Run (pipe-separated origins)
