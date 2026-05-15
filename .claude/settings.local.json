@@ -24,7 +24,9 @@
       "Bash(echo \"EXIT: $?\")",
       "WebFetch(domain:www.googlecloudcommunity.com)",
       "Bash(git -C c:/Users/GOEPPEA/Documents/AI_Playground/AI_Daily_Brief status)",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(timeout 5 npx vite)",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": [
       "Read(/.env)",

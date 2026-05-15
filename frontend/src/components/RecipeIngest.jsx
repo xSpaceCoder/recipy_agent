@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/useAuth'
+import RecipeForm from './RecipeForm'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -159,11 +160,7 @@ function RecipeIngest({ onSaved }) {
   }
 
   return (
-    <div className="recipe-form">
-      <h2>Import Recipe</h2>
-
-      {error && <div className="error">{error}</div>}
-
+    <div>
       <div className="mode-tabs">
         <button className={mode === 'url' ? 'active' : ''} onClick={() => setMode('url')}>
           Web Link
@@ -174,51 +171,64 @@ function RecipeIngest({ onSaved }) {
         <button className={mode === 'image' ? 'active' : ''} onClick={() => setMode('image')}>
           Photo
         </button>
+        <button className={mode === 'manual' ? 'active' : ''} onClick={() => setMode('manual')}>
+          Manual
+        </button>
       </div>
 
-      {(mode === 'url' || mode === 'youtube') && (
-        <div className="ingest-input">
-          <label>
-            {mode === 'url' ? 'Recipe URL' : 'YouTube Short URL'}
-            <input
-              type="url"
-              placeholder={mode === 'url' ? 'https://example.com/recipe...' : 'https://youtube.com/shorts/...'}
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-            />
-          </label>
-          <button
-            className="submit-btn"
-            onClick={handleIngestUrl}
-            disabled={loading || !url.trim()}
-          >
-            {loading ? 'Analyzing...' : 'Extract Recipe'}
-          </button>
+      {mode === 'manual' ? (
+        <RecipeForm onSaved={onSaved} />
+      ) : (
+        <div className="recipe-form">
+          <h2>Import Recipe</h2>
+
+          {error && <div className="error">{error}</div>}
+
+          {(mode === 'url' || mode === 'youtube') && (
+            <div className="ingest-input">
+              <label>
+                {mode === 'url' ? 'Recipe URL' : 'YouTube Short URL'}
+                <input
+                  type="url"
+                  placeholder={mode === 'url' ? 'https://example.com/recipe...' : 'https://youtube.com/shorts/...'}
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                />
+              </label>
+              <button
+                className="submit-btn"
+                onClick={handleIngestUrl}
+                disabled={loading || !url.trim()}
+              >
+                {loading ? 'Analyzing...' : 'Extract Recipe'}
+              </button>
+            </div>
+          )}
+
+          {mode === 'image' && (
+            <div className="ingest-input">
+              <label>
+                Upload photo(s) of recipe
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={e => setFiles(e.target.files)}
+                />
+              </label>
+              <button
+                className="submit-btn"
+                onClick={handleIngestImage}
+                disabled={loading || !files?.length}
+              >
+                {loading ? 'Analyzing...' : 'Extract Recipe'}
+              </button>
+            </div>
+          )}
+
+          {loading && <p className="status">AI is reading the recipe... this may take a few seconds.</p>}
         </div>
       )}
-
-      {mode === 'image' && (
-        <div className="ingest-input">
-          <label>
-            Upload photo(s) of recipe
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={e => setFiles(e.target.files)}
-            />
-          </label>
-          <button
-            className="submit-btn"
-            onClick={handleIngestImage}
-            disabled={loading || !files?.length}
-          >
-            {loading ? 'Analyzing...' : 'Extract Recipe'}
-          </button>
-        </div>
-      )}
-
-      {loading && <p className="status">AI is reading the recipe... this may take a few seconds.</p>}
     </div>
   )
 }

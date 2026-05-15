@@ -1,12 +1,50 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AuthProvider, useAuth } from './lib/useAuth'
 import LoginPage from './components/LoginPage'
 import RecipeForm from './components/RecipeForm'
 import RecipeIngest from './components/RecipeIngest'
 import RecipeList from './components/RecipeList'
 
+function ProfileMenu() {
+  const { user, signOut } = useAuth()
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const avatarUrl = user?.user_metadata?.avatar_url
+  const displayName = user?.user_metadata?.full_name || user?.email || 'User'
+
+  return (
+    <div className="profile-menu" ref={menuRef}>
+      <button className="profile-btn" onClick={() => setOpen(!open)}>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="profile-avatar" />
+        ) : (
+          <svg className="profile-avatar-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+        )}
+      </button>
+      {open && (
+        <div className="profile-dropdown">
+          <div className="profile-name">{displayName}</div>
+          <button className="profile-signout" onClick={signOut}>Sign Out</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AppContent() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const [view, setView] = useState('list')
   const [refreshKey, setRefreshKey] = useState(0)
   const [editingRecipe, setEditingRecipe] = useState(null)
@@ -28,35 +66,23 @@ function AppContent() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Recipe Agent</h1>
+        <div className="header-brand" onClick={() => { setEditingRecipe(null); setView('list') }}>
+          <img src="/icon/favicon.png" alt="" className="header-logo" />
+          <h1>Nexxt Bite</h1>
+        </div>
         <nav>
-          <button
-            className={view === 'list' ? 'active' : ''}
-            onClick={() => { setEditingRecipe(null); setView('list') }}
-          >
-            Recipes
-          </button>
           <button
             className={view === 'import' ? 'active' : ''}
             onClick={() => { setEditingRecipe(null); setView('import') }}
           >
-            Import
+            +
           </button>
-          <button
-            className={view === 'add' ? 'active' : ''}
-            onClick={() => { setEditingRecipe(null); setView('add') }}
-          >
-            + Manual
-          </button>
-          <button className="sign-out-btn" onClick={signOut}>
-            Sign Out
-          </button>
+          <ProfileMenu />
         </nav>
       </header>
       <main>
         {view === 'list' && <RecipeList key={refreshKey} onEdit={handleEdit} />}
         {view === 'import' && <RecipeIngest onSaved={handleRecipeSaved} />}
-        {view === 'add' && <RecipeForm onSaved={handleRecipeSaved} />}
         {view === 'edit' && editingRecipe && (
           <RecipeForm key={editingRecipe.id} recipe={editingRecipe} onSaved={handleRecipeSaved} />
         )}

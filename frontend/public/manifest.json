@@ -1,6 +1,6 @@
 {
-  "name": "Recipe Agent",
-  "short_name": "Recipes",
+  "name": "Nexxt Bite",
+  "short_name": "Nexxt Bite",
   "description": "AI-powered recipe management",
   "start_url": "/",
   "display": "standalone",

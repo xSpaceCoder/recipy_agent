@@ -30,6 +30,7 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**`
 - **PWA**: Installable on phones, service worker for offline caching, Web Share Target API for sharing recipes directly from browser/YouTube (like sharing to WhatsApp)
 - **Auth**: Supabase Auth with Google OAuth + Email magic link; full-screen login page gates the app
+- **Session persistence**: Supabase client configured with `persistSession: true`, `autoRefreshToken: true`, dedicated `storageKey`. Users stay logged in as long as they open the app once within 7 days (free tier refresh token window). Service worker excludes Supabase requests from caching to avoid stale auth responses.
 - **Multi-user model**: Each recipe has a `user_id` (owner) and `visibility` (public/private). Users see own recipes + public recipes from others. Rating and edit/delete are owner-only.
 - **Backend auth**: All API endpoints verify Supabase JWT via `Authorization: Bearer` header; service role key used for DB access with manual user-scoping
 

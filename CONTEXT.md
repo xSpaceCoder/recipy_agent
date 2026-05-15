@@ -50,7 +50,8 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 ## Deployment
 - **Frontend hosting**: Vercel (free tier) — auto-deploys on `git push` to `main`, preview URLs for PRs
 - **Backend hosting**: Google Cloud Run (free tier, europe-west1) — containerized FastAPI, auto-deploys via GitHub Actions on push to `backend/**`, manual trigger via `workflow_dispatch`
-- **PWA**: Installable on phones, offline caching via service worker, Web Share Target API (share recipes from browser/YouTube directly to the app)
+- **PWA**: Installable on phones, offline caching via service worker (excludes Supabase auth from cache), Web Share Target API (share recipes from browser/YouTube directly to the app)
+- **Session persistence**: Supabase client uses `localStorage` with `autoRefreshToken` — users stay logged in as long as they open the app once per 7 days (free tier refresh token window)
 - **CI/CD**: Vercel GitHub integration for frontend; GitHub Actions + `google-github-actions/deploy-cloudrun@v2` for backend
 - **Backend env vars**: Set on Cloud Run directly (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_AI_API_KEY`, `ALLOWED_ORIGINS` using `|` as separator)
 - **CORS**: Managed via `ALLOWED_ORIGINS` env var on Cloud Run (pipe-separated origins)

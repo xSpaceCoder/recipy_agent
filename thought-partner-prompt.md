@@ -88,6 +88,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 Project has **auth & multi-user implemented** (as of 2026-05-13):
 - Supabase database deployed with recipes table + RLS + full-text search + user ownership
 - Auth: Supabase Auth with Google OAuth + Email magic link, full-screen login page
+- Session persistence: `persistSession: true` + `autoRefreshToken: true` in Supabase client config; service worker bypasses Supabase requests; users stay logged in if they open the app once within 7 days (free tier refresh token window)
 - Multi-user: per-user recipe ownership, public/private visibility toggle, rating owner-only
 - Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context
 - Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), JWT verification on all endpoints
