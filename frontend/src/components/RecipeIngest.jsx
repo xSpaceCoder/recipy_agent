@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/useAuth'
 import RecipeForm from './RecipeForm'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-function RecipeIngest({ onSaved }) {
+function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
   const { user } = useAuth()
   const [mode, setMode] = useState('url')
   const [url, setUrl] = useState('')
@@ -13,6 +13,15 @@ function RecipeIngest({ onSaved }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
+
+  useEffect(() => {
+    if (initialUrl) {
+      const isYoutube = initialUrl.includes('youtube.com') || initialUrl.includes('youtu.be')
+      setMode(isYoutube ? 'youtube' : 'url')
+      setUrl(initialUrl)
+      if (onConsumeUrl) onConsumeUrl()
+    }
+  }, [initialUrl])
 
   const getAuthHeaders = async () => {
     const { data: { session } } = await supabase.auth.getSession()

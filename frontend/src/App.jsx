@@ -48,6 +48,17 @@ function AppContent() {
   const [view, setView] = useState('list')
   const [refreshKey, setRefreshKey] = useState(0)
   const [editingRecipe, setEditingRecipe] = useState(null)
+  const [sharedUrl, setSharedUrl] = useState(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const incomingUrl = params.get('url') || params.get('text')
+    if (window.location.pathname === '/ingest' && incomingUrl) {
+      setSharedUrl(incomingUrl)
+      setView('import')
+      window.history.replaceState({}, '', '/')
+    }
+  }, [])
 
   if (loading) return <div className="status">Loading...</div>
   if (!user) return <LoginPage />
@@ -82,7 +93,7 @@ function AppContent() {
       </header>
       <main>
         {view === 'list' && <RecipeList key={refreshKey} onEdit={handleEdit} />}
-        {view === 'import' && <RecipeIngest onSaved={handleRecipeSaved} />}
+        {view === 'import' && <RecipeIngest onSaved={handleRecipeSaved} initialUrl={sharedUrl} onConsumeUrl={() => setSharedUrl(null)} />}
         {view === 'edit' && editingRecipe && (
           <RecipeForm key={editingRecipe.id} recipe={editingRecipe} onSaved={handleRecipeSaved} />
         )}
