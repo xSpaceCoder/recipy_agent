@@ -45,9 +45,9 @@ Accept recipes in ANY format and normalize them:
 
 The agent estimates missing metadata (prep time, dietary tags, etc.) when not explicitly provided.
 
-### Feature 2: Recipe Consultation & Listing (Partially Implemented)
+### Feature 2: Recipe Consultation & Listing (Implemented)
 - Browse/filter/search recipes by tags, season, prep time, etc. (done)
-- Natural language queries: "I want a light, fast meal tonight. I have vegetables and rice at home." (not yet)
+- Natural language queries via Gemini: auto-detected in search bar (4+ words or NL indicators), bilingual DE/EN, season-aware with German produce seasonality, returns ranked recipes with 1-sentence explanations for top 5 matches, graceful fallback to text search on failure (done)
 - Shopping list generation from selected recipes (not yet)
 - Recipe scaling (adjust servings) (not yet)
 
@@ -105,8 +105,8 @@ recipes:
         ├── main.py               (app entry, CORS via ALLOWED_ORIGINS env var, routers)
         ├── config.py             (pydantic-settings)
         ├── auth.py               (JWT verification dependency via Supabase get_user)
-        ├── routers/              (recipes.py, ingestion.py)
-        └── services/             (ai_parser.py, scraper.py)
+        ├── routers/              (recipes.py, ingestion.py, consultation.py)
+        └── services/             (ai_parser.py, scraper.py, consultation.py)
 ```
 
 ## What Supabase Provides Out of the Box

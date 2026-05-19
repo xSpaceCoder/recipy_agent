@@ -42,7 +42,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 
 1. **Recipe Ingestion** (Implemented) — Accept recipes in any format (photos of printed recipes, YouTube video URLs via Gemini multimodal, web links, manual entry). Parse and store them in a standardized format. Auto-estimate missing metadata (prep time, dietary tags, difficulty).
 
-2. **Recipe Consultation** (Partially implemented) — Browse, filter, and search my recipe collection. Answer natural language queries like "I want a light, fast meal tonight, I have vegetables and rice at home." Generate shopping lists. Scale recipes.
+2. **Recipe Consultation** (Implemented) — Browse, filter, and search my recipe collection. Natural language queries (e.g. "etwas schnelles mit Reis", "something light for summer") are auto-detected and routed through Gemini, which ranks all recipes by relevance with 1-sentence explanations for top matches. Season-aware, bilingual (DE/EN), graceful fallback to text search. Shopping list generation and recipe scaling are not yet implemented.
 
 **Recipe Data Fields:**
 - user_id (owner), visibility (public/private)
@@ -85,16 +85,17 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 7. **Ask clarifying questions** — If my question is ambiguous, ask before guessing.
 
 ### Current Status
-Project has **auth & multi-user implemented** (as of 2026-05-13):
+Project has **AI consultation implemented** (as of 2026-05-19):
 - Supabase database deployed with recipes table + RLS + full-text search + user ownership
 - Auth: Supabase Auth with Google OAuth + Email magic link, full-screen login page
 - Session persistence: `persistSession: true` + `autoRefreshToken: true` in Supabase client config; service worker bypasses Supabase requests; users stay logged in if they open the app once within 7 days (free tier refresh token window)
 - Multi-user: per-user recipe ownership, public/private visibility toggle, rating owner-only
-- Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context
-- Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), JWT verification on all endpoints
+- Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context, natural language search with AI explanations
+- Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), consultation endpoint (NL query → Gemini ranks recipes with seasonal context), JWT verification on all endpoints
+- AI Consultation: auto-detects NL queries in search bar, bilingual (DE/EN), season-aware with German produce seasonality, returns ranked recipes with 1-sentence explanations, graceful fallback to text search
 - MCP server connected for direct Supabase management from Claude Code
 - Vercel deployment configured (vercel.json, CI/CD via GitHub integration)
 - PWA setup: manifest.json, service worker, Web Share Target API (share recipes from browser/YouTube like sharing to WhatsApp)
 - Multiple users: me and friends/family (access via installed PWA on phones)
 
-**Next steps:** Recipe consultation (natural language queries), shopping list generation, recipe scaling.
+**Next steps:** cook_log table (recipe_id + date, enables "what haven't I cooked in a while?" queries), shopping list generation, recipe scaling.

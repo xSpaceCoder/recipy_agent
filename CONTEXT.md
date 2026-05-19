@@ -1,7 +1,7 @@
 # Project Context
 
-## Status: Auth & Multi-User Implemented
-Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured. Multi-user authentication (Google OAuth + Email magic link) with per-user recipe ownership and public/private visibility is implemented.
+## Status: AI Consultation Implemented
+Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured. Multi-user authentication (Google OAuth + Email magic link) with per-user recipe ownership and public/private visibility is implemented. AI-powered recipe consultation (natural language search via Gemini, bilingual DE/EN, season-aware) is implemented.
 
 ## Who
 - **Developer**: Solo — one person, no team
@@ -55,3 +55,4 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 - **CI/CD**: Vercel GitHub integration for frontend; GitHub Actions + `google-github-actions/deploy-cloudrun@v2` for backend
 - **Backend env vars**: Set on Cloud Run directly (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_AI_API_KEY`, `ALLOWED_ORIGINS` using `|` as separator)
 - **CORS**: Managed via `ALLOWED_ORIGINS` env var on Cloud Run (pipe-separated origins)
+- **AI Consultation**: Natural language search via `POST /api/recipes/consult` — auto-detected in frontend (4+ words or NL indicators), Gemini ranks all user-accessible recipes with seasonal context, bilingual DE/EN, graceful fallback to Supabase full-text search

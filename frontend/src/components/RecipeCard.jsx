@@ -25,6 +25,10 @@ function RecipeCard({ recipe, onDelete, onEdit, isOwner }) {
         {recipe.category && <span className="badge category">{recipe.category}</span>}
       </div>
 
+      {recipe.ai_explanation && (
+        <p className="ai-explanation">{recipe.ai_explanation}</p>
+      )}
+
       {recipe.description && <p className="card-desc">{recipe.description}</p>}
 
       <div className="card-meta">

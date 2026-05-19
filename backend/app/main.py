@@ -11,7 +11,7 @@ logging.basicConfig(
 
 load_dotenv("../.env")
 
-from app.routers import recipes, ingestion
+from app.routers import recipes, ingestion, consultation
 
 app = FastAPI(title="Recipe Agent API", version="0.1.0")
 
@@ -28,6 +28,7 @@ app.add_middleware(
 
 app.include_router(recipes.router)
 app.include_router(ingestion.router)
+app.include_router(consultation.router)
 
 
 @app.get("/health")
