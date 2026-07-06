@@ -46,7 +46,12 @@
       "Bash(cmd /c \"where vercel 2>NUL & where supabase 2>NUL & where gcloud 2>NUL\")",
       "Bash(dir C:\\\\Users\\\\GOEPPEA\\\\Documents\\\\AI_Playground\\\\AI_Daily_Brief:*)",
       "Bash(.venv/Scripts/python -m pytest tests/ -v)",
-      "Bash(.venv/Scripts/python.exe -m pytest tests/ -v)"
+      "Bash(.venv/Scripts/python.exe -m pytest tests/ -v)",
+      "Bash(gh run:*)",
+      "Bash(gh auth:*)",
+      "Bash(command -v gh)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)"
     ],
     "deny": [
       "Read(/.env)",
