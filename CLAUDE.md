@@ -86,7 +86,10 @@ recipes:
 ├── .mcp.json                     (MCP server config — gitignored)
 ├── vercel.json                   (Vercel deployment config — build + SPA routing)
 ├── .github/workflows/
-│   └── deploy-backend.yml        (GitHub Actions — auto-deploy backend to Cloud Run)
+│   ├── deploy-backend.yml        (GitHub Actions — auto-deploy backend to Cloud Run)
+│   └── playwright.yml            (GitHub Actions — E2E tests on push/PR)
+├── tests/                          (Playwright E2E tests)
+│   └── smoke.spec.ts             (app load + login page smoke tests)
 ├── supabase/migrations/          (SQL migrations)
 ├── frontend/                     (React + Vite PWA)
 │   ├── index.html                (links manifest, registers service worker)
@@ -101,6 +104,10 @@ recipes:
 └── backend/                      (FastAPI, containerized for Cloud Run)
     ├── Dockerfile                (Python 3.11-slim, uvicorn on port 8080)
     ├── .dockerignore             (excludes .env, __pycache__, venv)
+    ├── pytest.ini                (pytest config — testpaths, pythonpath)
+    ├── tests/                    (backend unit/integration tests)
+    │   ├── conftest.py           (test client fixture, mocked deps)
+    │   └── test_health.py        (health endpoint smoke test)
     └── app/
         ├── main.py               (app entry, CORS via ALLOWED_ORIGINS env var, routers)
         ├── config.py             (pydantic-settings)
@@ -129,6 +136,18 @@ recipes:
 - Cover main functionality with meaningful tests — don't aim for 100% coverage
 - Focus tests on: recipe parsing logic, API endpoints, data model integrity
 - Skip trivial tests (getters, simple renders) unless they guard against real regressions
+
+### Running Tests
+- **Backend**: `cd backend && .venv/Scripts/python -m pytest tests/ -v`
+- **Frontend E2E**: `npx playwright test` (auto-starts Vite dev server)
+- **All**: `npm test` (runs backend then E2E)
+- Backend tests mock Supabase/Gemini via conftest.py — no real credentials needed
+
+### Backend Virtual Environment
+- The backend uses a Python venv at `backend/.venv/`
+- **Always use the venv** when running backend commands: `backend/.venv/Scripts/python` (Windows)
+- To activate: `cd backend && source .venv/Scripts/activate` (Git Bash) or `.venv\Scripts\activate` (PowerShell)
+- All dependencies from `requirements.txt` are installed in this venv
 
 ## env file
 - you do not have access to my env file
