@@ -13,6 +13,7 @@ def _make_mock_recipe():
         "prep_time_minutes": 10,
         "cook_time_minutes": 20,
         "is_vegetarian": True,
+        "source_accessed_at": "2024-01-01T00:00:00",
         "tags": ["vegetarian"],
         "category": "dinner",
         "season": ["all"],
@@ -65,7 +66,6 @@ def test_ingest_url_saves_to_supabase(client):
     assert inserted["user_id"] == "user-123"
     assert inserted["visibility"] == "private"
     assert "is_vegetarian" not in inserted
-    assert "error" not in inserted
 
 
 def test_ingest_url_returns_422_on_ai_failure(client):

@@ -47,6 +47,13 @@ def _save_recipe_to_supabase(sb, recipe: dict, user_id: str) -> dict:
     return result.data[0]
 
 
+def _do_save(recipe: dict, user_id: str) -> None:
+    sb = _get_supabase()
+    saved = _save_recipe_to_supabase(sb, recipe, user_id)
+    recipe["id"] = saved["id"]
+    recipe["saved"] = True
+
+
 class UrlRequest(BaseModel):
     url: str
 
@@ -78,16 +85,14 @@ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "link"
-    recipe["source_accessed_at"] = _now_iso()
 
     try:
-        sb = _get_supabase()
-        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
-        recipe["id"] = saved["id"]
-        recipe["saved"] = True
+        _do_save(recipe, user["id"])
     except Exception as e:
         logger.error(f"Failed to save recipe: {e}")
         raise HTTPException(status_code=500, detail="Failed to save recipe")
+
+    recipe["source_accessed_at"] = _now_iso()
 
     return recipe
 
@@ -126,16 +131,14 @@ async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_curr
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "video"
-    recipe["source_accessed_at"] = _now_iso()
 
     try:
-        sb = _get_supabase()
-        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
-        recipe["id"] = saved["id"]
-        recipe["saved"] = True
+        _do_save(recipe, user["id"])
     except Exception as e:
         logger.error(f"Failed to save recipe: {e}")
         raise HTTPException(status_code=500, detail="Failed to save recipe")
+
+    recipe["source_accessed_at"] = _now_iso()
 
     logger.info(f"Successfully parsed recipe: {recipe.get('title', 'unknown')}")
     return recipe
@@ -164,7 +167,6 @@ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = De
     source_image_urls = _upload_source_images(images)
 
     recipe["source_type"] = "image"
-    recipe["source_accessed_at"] = _now_iso()
     recipe["source_image_urls"] = source_image_urls
     if source_image_urls:
         hero_index = recipe.pop("hero_image_index", None)
@@ -174,13 +176,12 @@ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = De
             recipe["image_url"] = source_image_urls[0]
 
     try:
-        sb = _get_supabase()
-        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
-        recipe["id"] = saved["id"]
-        recipe["saved"] = True
+        _do_save(recipe, user["id"])
     except Exception as e:
         logger.error(f"Failed to save recipe: {e}")
         raise HTTPException(status_code=500, detail="Failed to save recipe")
+
+    recipe["source_accessed_at"] = _now_iso()
 
     return recipe
 
