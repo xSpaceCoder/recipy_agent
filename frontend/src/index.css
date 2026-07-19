@@ -767,6 +767,39 @@ legend {
   background: var(--bg);
 }
 
+.skip-area {
+  text-align: center;
+  margin-top: -20px;
+  margin-bottom: 12px;
+}
+
+.skip-btn {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.skip-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.saved-notice {
+  padding: 10px 12px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
 /* AI Consultation */
 .ai-explanation {
   font-size: 0.8rem;

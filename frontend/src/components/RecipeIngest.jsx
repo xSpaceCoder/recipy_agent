@@ -82,34 +82,32 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
     }
   }
 
-  const handleSave = async () => {
-    if (!preview) return
-    setLoading(true)
-    setError(null)
-
-    const { is_vegetarian, error: _err, ...recipeData } = preview
-    recipeData.user_id = user.id
-    const { error: dbError } = await supabase.from('recipes').insert(recipeData)
-
-    if (dbError) {
-      setError(dbError.message)
-      setLoading(false)
-    } else {
-      setLoading(false)
-      onSaved()
+  const handleDiscard = async () => {
+    if (preview?.id) {
+      setLoading(true)
+      const { error } = await supabase.from('recipes').delete().eq('id', preview.id)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
     }
-  }
-
-  const handleDiscard = () => {
     setPreview(null)
     setUrl('')
     setFiles(null)
+    setLoading(false)
+  }
+
+  const handleSkip = () => {
+    onSaved()
   }
 
   if (preview) {
     return (
       <div className="recipe-form">
         <h2>Review Recipe</h2>
+
+        <div className="saved-notice">✓ Recipe saved</div>
 
         {preview.is_vegetarian === false && (
           <div className="warning">This recipe contains meat or fish and is NOT vegetarian.</div>
@@ -157,11 +155,11 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
         </div>
 
         <div className="preview-actions">
-          <button className="submit-btn" onClick={handleSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Recipe'}
+          <button className="submit-btn" onClick={onSaved}>
+            View in List
           </button>
-          <button className="discard-btn" onClick={handleDiscard}>
-            Discard
+          <button className="discard-btn" onClick={handleDiscard} disabled={loading}>
+            {loading ? 'Deleting...' : 'Discard'}
           </button>
         </div>
       </div>
@@ -235,7 +233,16 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
             </div>
           )}
 
-          {loading && <p className="status">AI is reading the recipe... this may take a few seconds.</p>}
+          {loading && (
+            <div>
+              <p className="status">AI is reading the recipe... this may take a few seconds.</p>
+              <div className="skip-area">
+                <button className="skip-btn" onClick={handleSkip}>
+                  Skip & Save
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
