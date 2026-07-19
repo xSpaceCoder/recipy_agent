@@ -30,6 +30,23 @@ def _now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
+_SAVE_FIELDS = {
+    "title", "description", "ingredients", "instructions",
+    "servings", "prep_time_minutes", "cook_time_minutes",
+    "bake_time_minutes", "chill_time_minutes", "freeze_time_minutes",
+    "tags", "category", "season", "rating", "visibility",
+    "image_url", "source_url", "source_type",
+}
+
+
+def _save_recipe_to_supabase(sb, recipe: dict, user_id: str) -> dict:
+    data = {k: v for k, v in recipe.items() if k in _SAVE_FIELDS}
+    data["user_id"] = user_id
+    data.setdefault("visibility", "private")
+    result = sb.table("recipes").insert(data).execute()
+    return result.data[0]
+
+
 class UrlRequest(BaseModel):
     url: str
 
@@ -62,6 +79,16 @@ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_
     recipe["source_url"] = request.url
     recipe["source_type"] = "link"
     recipe["source_accessed_at"] = _now_iso()
+
+    try:
+        sb = _get_supabase()
+        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
+        recipe["id"] = saved["id"]
+        recipe["saved"] = True
+    except Exception as e:
+        logger.error(f"Failed to save recipe: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save recipe")
+
     return recipe
 
 
@@ -100,6 +127,16 @@ async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_curr
     recipe["source_url"] = request.url
     recipe["source_type"] = "video"
     recipe["source_accessed_at"] = _now_iso()
+
+    try:
+        sb = _get_supabase()
+        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
+        recipe["id"] = saved["id"]
+        recipe["saved"] = True
+    except Exception as e:
+        logger.error(f"Failed to save recipe: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save recipe")
+
     logger.info(f"Successfully parsed recipe: {recipe.get('title', 'unknown')}")
     return recipe
 
@@ -135,6 +172,16 @@ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = De
             recipe["image_url"] = source_image_urls[hero_index]
         else:
             recipe["image_url"] = source_image_urls[0]
+
+    try:
+        sb = _get_supabase()
+        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
+        recipe["id"] = saved["id"]
+        recipe["saved"] = True
+    except Exception as e:
+        logger.error(f"Failed to save recipe: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save recipe")
+
     return recipe
 
 
