@@ -31,7 +31,7 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 | Frontend Hosting | Vercel (free tier, CI/CD via GitHub) | Configured |
 | Backend Hosting | Google Cloud Run (free tier, europe-west1) | Deployed |
 | Private Repo | GitHub: https://github.com/xSpaceCoder/AI_Daily_Brief | Active |
-| Dev tool | Claude Code (Opus 4.6) in VS Code | Active |
+| Dev tool | open code with deepSeek V4 in VS Code | Active |
 
 
 ## Learning Goals

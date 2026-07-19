@@ -1,12 +1,19 @@
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from supabase import create_client
 from app.config import get_settings
 from app.auth import get_current_user
-from app.services.ai_parser import parse_recipe_from_text, parse_recipe_from_images, parse_recipe_from_video
+from app.services.ai_parser import (
+    parse_recipe_from_text,
+    parse_recipe_from_images,
+    parse_recipe_from_video,
+    select_dish_image_from_photos,
+)
 from app.services.scraper import scrape_webpage, extract_image_url
 
 logger = logging.getLogger(__name__)
@@ -72,9 +79,23 @@ async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_curr
         logger.warning(f"AI returned error: {recipe['error']}")
         raise HTTPException(status_code=422, detail=recipe["error"])
 
-    thumbnail = _extract_youtube_thumbnail(request.url)
-    if thumbnail:
-        recipe["image_url"] = thumbnail
+    video_id = _extract_youtube_video_id(request.url)
+    if video_id:
+        candidates = await _fetch_youtube_thumbnails(video_id)
+        if candidates:
+            try:
+                best_index = select_dish_image_from_photos(
+                    recipe.get("title", ""), candidates
+                )
+                if best_index >= 0 and best_index < len(candidates):
+                    recipe["image_url"] = candidates[best_index]["url"]
+                else:
+                    recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+            except Exception as e:
+                logger.warning(f"AI image selection failed, using fallback: {e}")
+                recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+        else:
+            recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
 
     recipe["source_url"] = request.url
     recipe["source_type"] = "video"
@@ -109,23 +130,57 @@ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = De
     recipe["source_accessed_at"] = _now_iso()
     recipe["source_image_urls"] = source_image_urls
     if source_image_urls:
-        recipe["image_url"] = source_image_urls[0]
+        hero_index = recipe.pop("hero_image_index", None)
+        if isinstance(hero_index, int) and 0 <= hero_index < len(source_image_urls):
+            recipe["image_url"] = source_image_urls[hero_index]
+        else:
+            recipe["image_url"] = source_image_urls[0]
     return recipe
 
 
-def _extract_youtube_thumbnail(url: str) -> str | None:
-    import re
-    patterns = [
-        r'youtube\.com/shorts/([a-zA-Z0-9_-]+)',
-        r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)',
-        r'youtu\.be/([a-zA-Z0-9_-]+)',
-    ]
-    for pattern in patterns:
+_YOUTUBE_ID_PATTERNS = [
+    r'youtube\.com/shorts/([a-zA-Z0-9_-]+)',
+    r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)',
+    r'youtu\.be/([a-zA-Z0-9_-]+)',
+]
+
+
+def _extract_youtube_video_id(url: str) -> str | None:
+    for pattern in _YOUTUBE_ID_PATTERNS:
         match = re.search(pattern, url)
         if match:
-            video_id = match.group(1)
-            return f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+            return match.group(1)
     return None
+
+
+_THUMBNAIL_QUALITIES = [
+    ("maxresdefault", "maxresdefault.jpg"),
+    ("sddefault", "sddefault.jpg"),
+    ("hqdefault", "hqdefault.jpg"),
+    ("mqdefault", "mqdefault.jpg"),
+]
+
+_STORYBOARD_FRAMES = [(f"frame_{i}", f"{i}.jpg") for i in range(4)]
+
+
+async def _fetch_youtube_thumbnails(video_id: str) -> list[dict]:
+    base = f"https://img.youtube.com/vi/{video_id}"
+    candidates = []
+    async with httpx.AsyncClient(follow_redirects=True, timeout=10.0) as client:
+        for name, filename in _THUMBNAIL_QUALITIES + _STORYBOARD_FRAMES:
+            url = f"{base}/{filename}"
+            try:
+                response = await client.get(url)
+                if response.status_code == 200 and response.headers.get("content-type", "").startswith("image/"):
+                    candidates.append({
+                        "name": name,
+                        "url": url,
+                        "mime_type": response.headers["content-type"],
+                        "data": response.content,
+                    })
+            except Exception:
+                continue
+    return candidates
 
 
 def _upload_source_images(images: list[dict]) -> list[str]:

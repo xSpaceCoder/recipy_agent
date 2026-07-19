@@ -72,12 +72,45 @@ def parse_recipe_from_image(image_bytes: bytes, mime_type: str) -> dict:
 
 def parse_recipe_from_images(images: list[dict]) -> dict:
     model = get_model()
-    parts = [RECIPE_PARSE_PROMPT]
+    parts = [
+        RECIPE_PARSE_PROMPT,
+        'Also include a field "hero_image_index" (integer, 0-based) indicating which of the provided images best shows the FINISHED, PLATED dish.'
+    ]
     for img in images:
         parts.append({"mime_type": img["mime_type"], "data": img["data"]})
     parts.append("Extract the recipe from these image(s).")
     response = model.generate_content(parts)
     return _parse_response(response.text)
+
+
+PHOTO_SELECT_PROMPT = """You are a food photography assistant. You will be shown several images from a cooking video or recipe.
+
+Identify which image BEST shows the FINISHED, PLATED dish (the final cooked result ready to eat).
+Ignore images that primarily show:
+- The chef's face or people
+- Text overlays or title cards
+- Raw ingredients or preparation process
+- Cooking steps or action shots
+- Blurry or low-quality frames
+
+Return ONLY valid JSON: {"best_index": <integer>}
+- best_index: 0-based index of the best image showing the finished dish
+- If none of the images clearly show the finished dish, set best_index to -1"""
+
+
+def select_dish_image_from_photos(title: str, images: list[dict]) -> int:
+    if not images:
+        return -1
+    model = get_model()
+    parts = [f"Recipe title: {title}", PHOTO_SELECT_PROMPT]
+    for img in images:
+        parts.append({"mime_type": img["mime_type"], "data": img["data"]})
+    response = model.generate_content(parts)
+    result = _parse_response(response.text)
+    index = result.get("best_index", -1)
+    if not isinstance(index, int) or index < -1 or index >= len(images):
+        return -1
+    return index
 
 
 def _parse_response(text: str) -> dict:

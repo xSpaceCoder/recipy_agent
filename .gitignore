@@ -17,3 +17,4 @@ gcp-key.json
 /playwright/.cache/
 /playwright/.auth/
 .env.test
+.gcp-key.json

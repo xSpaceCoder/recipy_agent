@@ -11,37 +11,41 @@ function RecipeCard({ recipe, onDelete, onEdit, isOwner }) {
 
   return (
     <div className="recipe-card" onClick={() => setExpanded(!expanded)}>
-      <div className="card-image">
-        {recipe.image_url ? (
-          <img src={recipe.image_url} alt={recipe.title} />
-        ) : (
-          <div className="card-image-placeholder">
-            <span>{recipe.category === 'cake' || recipe.category === 'dessert' ? '🍰' : '🍽️'}</span>
-          </div>
-        )}
-      </div>
-      <div className="card-header">
-        <h3>{recipe.title}</h3>
-        {recipe.category && <span className="badge category">{recipe.category}</span>}
-      </div>
-
-      {recipe.ai_explanation && (
-        <p className="ai-explanation">{recipe.ai_explanation}</p>
-      )}
-
-      {recipe.description && <p className="card-desc">{recipe.description}</p>}
-
-      <div className="card-meta">
-        {totalTime > 0 && <span>{totalTime} min</span>}
-        {recipe.servings && <span>{recipe.servings} servings</span>}
-        {isOwner && recipe.rating && <span>{'★'.repeat(recipe.rating)}{'☆'.repeat(5 - recipe.rating)}</span>}
-      </div>
-
-      {recipe.tags?.length > 0 && (
-        <div className="card-tags">
-          {recipe.tags.map(tag => <span key={tag} className="badge tag">{tag}</span>)}
+      <div className="card-main">
+        <div className="card-image">
+          {recipe.image_url ? (
+            <img src={recipe.image_url} alt={recipe.title} />
+          ) : (
+            <div className="card-image-placeholder">
+              <span>{recipe.category === 'cake' || recipe.category === 'dessert' ? '🍰' : '🍽️'}</span>
+            </div>
+          )}
         </div>
-      )}
+        <div className="card-body">
+          <div className="card-header">
+            <h3>{recipe.title}</h3>
+            {recipe.category && <span className="badge category">{recipe.category}</span>}
+          </div>
+
+          {recipe.ai_explanation && (
+            <p className="ai-explanation">{recipe.ai_explanation}</p>
+          )}
+
+          {recipe.description && <p className="card-desc">{recipe.description}</p>}
+
+          <div className="card-meta">
+            {totalTime > 0 && <span>{totalTime} min</span>}
+            {recipe.servings && <span>{recipe.servings} servings</span>}
+            {isOwner && recipe.rating && <span>{'★'.repeat(recipe.rating)}{'☆'.repeat(5 - recipe.rating)}</span>}
+          </div>
+
+          {recipe.tags?.length > 0 && (
+            <div className="card-tags">
+              {recipe.tags.map(tag => <span key={tag} className="badge tag">{tag}</span>)}
+            </div>
+          )}
+        </div>
+      </div>
 
       {expanded && (
         <div className="card-details">
