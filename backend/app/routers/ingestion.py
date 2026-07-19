@@ -42,7 +42,7 @@ _SAVE_FIELDS = {
 def _save_recipe_to_supabase(sb, recipe: dict, user_id: str) -> dict:
     data = {k: v for k, v in recipe.items() if k in _SAVE_FIELDS}
     data["user_id"] = user_id
-    data.setdefault("visibility", "private")
+    data["visibility"] = "private"
     result = sb.table("recipes").insert(data).execute()
     return result.data[0]
 
