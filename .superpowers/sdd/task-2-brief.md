@@ -1,3 +1,14 @@
+### Task 2: Backend — Write tests for ingestion save
+
+**Files:**
+- Create: `backend/tests/test_ingestion.py`
+- Modify: `backend/tests/conftest.py` (optional — add ingestion-specific fixture)
+
+- [ ] **Step 1: Create test file with mocks**
+
+Create `backend/tests/test_ingestion.py`:
+
+```python
 from unittest.mock import patch, MagicMock
 
 from app.auth import get_current_user
@@ -12,14 +23,14 @@ def _make_mock_recipe():
         "servings": 4,
         "prep_time_minutes": 10,
         "cook_time_minutes": 20,
-        "is_vegetarian": True,
-        "source_accessed_at": "2024-01-01T00:00:00",
         "tags": ["vegetarian"],
         "category": "dinner",
         "season": ["all"],
         "visibility": "public",
         "source_url": "https://example.com/recipe",
         "source_type": "link",
+        "is_vegetarian": True,
+        "error": None,
     }
 
 
@@ -66,7 +77,7 @@ def test_ingest_url_saves_to_supabase(client):
     assert inserted["user_id"] == "user-123"
     assert inserted["visibility"] == "private"
     assert "is_vegetarian" not in inserted
-    assert "source_accessed_at" not in inserted
+    assert "error" not in inserted
 
 
 def test_ingest_url_returns_422_on_ai_failure(client):
@@ -108,3 +119,12 @@ def test_ingest_url_returns_500_on_save_failure(client):
         )
 
     assert response.status_code == 500
+```
+
+- [ ] **Step 2: Run tests to verify they pass
+
+```bash
+cd backend && .venv/Scripts/python -m pytest tests/test_ingestion.py -v
+```
+
+Expected: 3 tests pass.

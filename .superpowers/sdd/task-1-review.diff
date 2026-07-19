@@ -1,0 +1,135 @@
+diff --git a/backend/app/routers/ingestion.py b/backend/app/routers/ingestion.py
+index 17bc001..93b9930 100644
+--- a/backend/app/routers/ingestion.py
++++ b/backend/app/routers/ingestion.py
+@@ -23,20 +23,37 @@ router = APIRouter(prefix="/api/ingest", tags=["ingestion"])
+ 
+ def _get_supabase():
+     settings = get_settings()
+     return create_client(settings.supabase_url, settings.supabase_service_role_key)
+ 
+ 
+ def _now_iso():
+     return datetime.now(timezone.utc).isoformat()
+ 
+ 
++_SAVE_FIELDS = {
++    "title", "description", "ingredients", "instructions",
++    "servings", "prep_time_minutes", "cook_time_minutes",
++    "bake_time_minutes", "chill_time_minutes", "freeze_time_minutes",
++    "tags", "category", "season", "rating", "visibility",
++    "image_url", "source_url", "source_type",
++}
++
++
++def _save_recipe_to_supabase(sb, recipe: dict, user_id: str) -> dict:
++    data = {k: v for k, v in recipe.items() if k in _SAVE_FIELDS}
++    data["user_id"] = user_id
++    data.setdefault("visibility", "private")
++    result = sb.table("recipes").insert(data).execute()
++    return result.data[0]
++
++
+ class UrlRequest(BaseModel):
+     url: str
+ 
+ 
+ @router.post("/url")
+ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_user)):
+     try:
+         content = await scrape_webpage(request.url)
+     except Exception as e:
+         raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {e}")
+@@ -55,20 +72,30 @@ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_
+     try:
+         image_url = await extract_image_url(request.url)
+         if image_url:
+             recipe["image_url"] = image_url
+     except Exception:
+         pass
+ 
+     recipe["source_url"] = request.url
+     recipe["source_type"] = "link"
+     recipe["source_accessed_at"] = _now_iso()
++
++    try:
++        sb = _get_supabase()
++        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
++        recipe["id"] = saved["id"]
++        recipe["saved"] = True
++    except Exception as e:
++        logger.error(f"Failed to save recipe: {e}")
++        raise HTTPException(status_code=500, detail="Failed to save recipe")
++
+     return recipe
+ 
+ 
+ @router.post("/youtube")
+ async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_current_user)):
+     logger.info(f"YouTube ingestion request for: {request.url}")
+ 
+     try:
+         recipe = parse_recipe_from_video(request.url)
+     except Exception as e:
+         logger.error(f"AI video parsing failed: {e}")
+         raise HTTPException(status_code=422, detail=f"AI parsing failed: {e}")
+@@ -93,20 +120,30 @@ async def ingest_from_youtube(request: UrlRequest, user: dict = Depends(get_curr
+                     recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+             except Exception as e:
+                 logger.warning(f"AI image selection failed, using fallback: {e}")
+                 recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+         else:
+             recipe["image_url"] = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+ 
+     recipe["source_url"] = request.url
+     recipe["source_type"] = "video"
+     recipe["source_accessed_at"] = _now_iso()
++
++    try:
++        sb = _get_supabase()
++        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
++        recipe["id"] = saved["id"]
++        recipe["saved"] = True
++    except Exception as e:
++        logger.error(f"Failed to save recipe: {e}")
++        raise HTTPException(status_code=500, detail="Failed to save recipe")
++
+     logger.info(f"Successfully parsed recipe: {recipe.get('title', 'unknown')}")
+     return recipe
+ 
+ 
+ @router.post("/image")
+ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = Depends(get_current_user)):
+     if not files:
+         raise HTTPException(status_code=400, detail="No images provided")
+ 
+     images = []
+@@ -128,20 +165,30 @@ async def ingest_from_image(files: list[UploadFile] = File(...), user: dict = De
+ 
+     recipe["source_type"] = "image"
+     recipe["source_accessed_at"] = _now_iso()
+     recipe["source_image_urls"] = source_image_urls
+     if source_image_urls:
+         hero_index = recipe.pop("hero_image_index", None)
+         if isinstance(hero_index, int) and 0 <= hero_index < len(source_image_urls):
+             recipe["image_url"] = source_image_urls[hero_index]
+         else:
+             recipe["image_url"] = source_image_urls[0]
++
++    try:
++        sb = _get_supabase()
++        saved = _save_recipe_to_supabase(sb, recipe, user["id"])
++        recipe["id"] = saved["id"]
++        recipe["saved"] = True
++    except Exception as e:
++        logger.error(f"Failed to save recipe: {e}")
++        raise HTTPException(status_code=500, detail="Failed to save recipe")
++
+     return recipe
+ 
+ 
+ _YOUTUBE_ID_PATTERNS = [
+     r'youtube\.com/shorts/([a-zA-Z0-9_-]+)',
+     r'youtube\.com/watch\?v=([a-zA-Z0-9_-]+)',
+     r'youtu\.be/([a-zA-Z0-9_-]+)',
+ ]

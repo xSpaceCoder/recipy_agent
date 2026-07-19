@@ -1,0 +1,150 @@
+diff --git a/frontend/src/components/RecipeIngest.jsx b/frontend/src/components/RecipeIngest.jsx
+index 9fa32f8..3460684 100644
+--- a/frontend/src/components/RecipeIngest.jsx
++++ b/frontend/src/components/RecipeIngest.jsx
+@@ -80,39 +80,37 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
+     } finally {
+       setLoading(false)
+     }
+   }
+ 
+-  const handleSave = async () => {
+-    if (!preview) return
+-    setLoading(true)
+-    setError(null)
+-
+-    const { is_vegetarian, error: _err, ...recipeData } = preview
+-    recipeData.user_id = user.id
+-    const { error: dbError } = await supabase.from('recipes').insert(recipeData)
+-
+-    if (dbError) {
+-      setError(dbError.message)
+-      setLoading(false)
+-    } else {
+-      setLoading(false)
+-      onSaved()
++  const handleDiscard = async () => {
++    if (preview?.id) {
++      setLoading(true)
++      const { error } = await supabase.from('recipes').delete().eq('id', preview.id)
++      if (error) {
++        setError(error.message)
++        setLoading(false)
++        return
++      }
+     }
+-  }
+-
+-  const handleDiscard = () => {
+     setPreview(null)
+     setUrl('')
+     setFiles(null)
++    setLoading(false)
++  }
++
++  const handleSkip = () => {
++    onSaved()
+   }
+ 
+   if (preview) {
+     return (
+       <div className="recipe-form">
+         <h2>Review Recipe</h2>
+ 
++        <div className="saved-notice">✓ Recipe saved</div>
++
+         {preview.is_vegetarian === false && (
+           <div className="warning">This recipe contains meat or fish and is NOT vegetarian.</div>
+         )}
+ 
+         <div className="preview-card">
+@@ -155,15 +153,15 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
+             </div>
+           )}
+         </div>
+ 
+         <div className="preview-actions">
+-          <button className="submit-btn" onClick={handleSave} disabled={loading}>
+-            {loading ? 'Saving...' : 'Save Recipe'}
++          <button className="submit-btn" onClick={onSaved}>
++            View in List
+           </button>
+-          <button className="discard-btn" onClick={handleDiscard}>
+-            Discard
++          <button className="discard-btn" onClick={handleDiscard} disabled={loading}>
++            {loading ? 'Deleting...' : 'Discard'}
+           </button>
+         </div>
+       </div>
+     )
+   }
+@@ -233,11 +231,20 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
+                 {loading ? 'Analyzing...' : 'Extract Recipe'}
+               </button>
+             </div>
+           )}
+ 
+-          {loading && <p className="status">AI is reading the recipe... this may take a few seconds.</p>}
++          {loading && (
++            <div>
++              <p className="status">AI is reading the recipe... this may take a few seconds.</p>
++              <div className="skip-area">
++                <button className="skip-btn" onClick={handleSkip}>
++                  Skip & Save
++                </button>
++              </div>
++            </div>
++          )}
+         </div>
+       )}
+     </div>
+   )
+ }
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+index ea97ef3..7cb4acc 100644
+--- a/frontend/src/index.css
++++ b/frontend/src/index.css
+@@ -765,10 +765,43 @@ legend {
+ 
+ .profile-signout:hover {
+   background: var(--bg);
+ }
+ 
++.skip-area {
++  text-align: center;
++  margin-top: -20px;
++  margin-bottom: 12px;
++}
++
++.skip-btn {
++  padding: 10px 24px;
++  background: transparent;
++  border: 1px solid var(--border);
++  border-radius: 20px;
++  font-size: 0.9rem;
++  color: var(--text-muted);
++  cursor: pointer;
++  transition: all 0.15s;
++}
++
++.skip-btn:hover {
++  border-color: var(--green);
++  color: var(--green);
++}
++
++.saved-notice {
++  padding: 10px 12px;
++  background: var(--green-bg);
++  color: var(--green);
++  border-radius: 8px;
++  margin-bottom: 14px;
++  font-size: 0.875rem;
++  font-weight: 500;
++  text-align: center;
++}
++
+ /* AI Consultation */
+ .ai-explanation {
+   font-size: 0.8rem;
+   font-style: italic;
+   color: var(--green);
