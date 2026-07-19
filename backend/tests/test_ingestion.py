@@ -12,6 +12,7 @@ def _make_mock_recipe():
         "servings": 4,
         "prep_time_minutes": 10,
         "cook_time_minutes": 20,
+        "is_vegetarian": True,
         "tags": ["vegetarian"],
         "category": "dinner",
         "season": ["all"],
