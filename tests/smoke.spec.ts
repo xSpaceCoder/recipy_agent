@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-test('login page renders', async ({ page }) => {
+test('login page renders with email/password form', async ({ page }) => {
   await page.goto('/');
-  // App should show login page when not authenticated
-  await expect(page.locator('body')).toBeVisible();
-  // Check that the app loaded (not a blank page or error)
-  const title = await page.title();
-  expect(title).toBeTruthy();
+  await expect(page.locator('.login-card')).toBeVisible();
+  await expect(page.locator('input[type="email"]')).toBeVisible();
+  await expect(page.locator('input[type="password"]')).toBeVisible();
+  await expect(page.locator('.submit-btn')).toContainText('Sign In');
+  await expect(page.locator('.google-btn')).toBeVisible();
+  await expect(page.locator('.forgot-password')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign up' })).toBeVisible();
 });
 
 test('app has no console errors on load', async ({ page }) => {
