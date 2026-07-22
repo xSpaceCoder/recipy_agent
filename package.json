@@ -7,7 +7,7 @@
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
     "test:e2e": "npx playwright test",
-    "test:backend": "cd backend && .venv/Scripts/python -m pytest tests/ -v",
+    "test:backend": "cd backend && ..\\.venv\\Scripts\\python -m pytest tests/ -v",
     "test": "npm run test:backend && npm run test:e2e"
   },
   "keywords": [],

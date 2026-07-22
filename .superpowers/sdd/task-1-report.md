@@ -1,31 +1,51 @@
-# Task 1 Report: Backend — Add save helper + update ingestion endpoints
+# Task 1 Report: Rewrite LoginPage with email/password auth
 
-## What was implemented
+## What I implemented
 
-1. **`_SAVE_FIELDS` constant** — whitelist of recipe fields that are safe to persist to Supabase (strips `is_vegetarian`, `error`, `hero_image_index`, `source_image_urls`, `source_accessed_at`)
-2. **`_save_recipe_to_supabase(sb, recipe, user_id) -> dict`** helper — inserts filtered recipe data into the `recipes` table with `visibility` defaulting to `"private"`
-3. **Save block added to all 3 ingestion endpoints** (`/api/ingest/url`, `/api/ingest/youtube`, `/api/ingest/image`) — each calls `_save_recipe_to_supabase` before returning, then enriches the response with `id` and `saved: true`
+- **`frontend/src/components/LoginPage.jsx`** — Replaced magic link flow with three-mode email/password auth:
+  - `signin` mode: email + password form with "Sign In" button, forgot password link, and toggle to signup
+  - `signup` mode: email + password + name fields with "Sign Up" button, toggle back to sign in
+  - `forgot` mode: email-only form with "Send Reset Link" button, back link to sign in
+  - Google OAuth button retained in all modes
+  - Handles loading, error, and sent states; mode switching clears error/sent state
+
+- **`tests/auth.spec.ts`** — 7 E2E tests covering all UI states
+
+## What I tested and test results
+
+All 7 tests pass with `npx playwright test tests/auth.spec.ts --project=chromium`:
+
+| Test | Status |
+|------|--------|
+| renders Google OAuth button | ✅ |
+| shows sign-in form by default | ✅ |
+| toggles to sign-up mode | ✅ |
+| shows forgot password link in sign-in mode | ✅ |
+| forgot password shows email-only form with back link | ✅ |
+| shows error on invalid sign-in | ✅ |
+| sign-up form has name field | ✅ |
+
+## TDD Evidence
+
+**RED** — Before implementing: 6 tests failed, 1 passed (Google button already existed). Failures were:
+- No `input[type="password"]` (magic link had none)
+- No `.auth-toggle` buttons
+- No `.forgot-password` link
+- `.submit-btn` showed "Send Magic Link" not "Sign In"
+
+**GREEN** — After rewrite: all 7 tests pass.
 
 ## Files changed
 
-- `backend/app/routers/ingestion.py` — 47 lines added
-
-## Test results
-
-Ran `backend/.venv/Scripts/python -m pytest tests/ -v`:
-- `test_health_endpoint` — **ERROR** (pre-existing: `conftest.py` patches `app.database.get_supabase` which doesn't exist; not related to this task)
-
-The test failure is a pre-existing infrastructure issue in `conftest.py`, not caused by the changes.
+- `frontend/src/components/LoginPage.jsx` — full rewrite (77 → 134 lines)
+- `tests/auth.spec.ts` — new file (54 lines)
 
 ## Self-review findings
 
-- All changes match the brief exactly — code blocks were used verbatim
-- `_SAVE_FIELDS` correctly excludes fields like `error`, `is_vegetarian`, `hero_image_index`, `source_image_urls`, `source_accessed_at`
-- `data.setdefault("visibility", "private")` ensures private default
-- Save happens BEFORE response is sent (per requirements)
-- No schema changes to `recipes` table were required
+- Tests originally used `.auth-toggle` locator which was ambiguous (both "Forgot password?" and "Sign up" buttons shared the class). Fixed by switching to `getByRole('button', { name: '...' })` for mode toggle buttons.
+- `.forgot-password` is unique (only rendered in signin mode), so class locator works fine there.
+- Implementation matches the brief exactly — no deviations, no unnecessary additions.
 
-## Concerns
+## Issues or concerns
 
-- Test infrastructure needs fixing (`conftest.py` references a non-existent `app.database` module) — should be patching `app.routers.ingestion._get_supabase` instead
-- The `.venv` didn't exist and had to be created; the pinned versions in `requirements.txt` (e.g., `pydantic-core==2.33.0`) don't have prebuilt wheels for Python 3.14, requiring `--only-binary :all:` fallback or version bump
+None. All tests pass, commit clean.

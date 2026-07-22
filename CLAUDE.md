@@ -44,10 +44,13 @@ Accept recipes in ANY format and normalize them:
 - **Manual entry** → structured form
 
 The agent estimates missing metadata (prep time, dietary tags, etc.) when not explicitly provided.
+- **Auto-save on ingestion**: After AI parsing, recipes are saved directly to Supabase. Preview step shows a streamlined "Skip & Save" flow.
+- **AI hero image selection**: For photo uploads, Gemini identifies which uploaded image best shows the finished dish via `hero_image_index`. For YouTube, Gemini evaluates up to 8 thumbnail candidates (4 quality levels + 4 storyboard frames) and selects the one with the best dish shot.
 
 ### Feature 2: Recipe Consultation & Listing (Implemented)
 - Browse/filter/search recipes by tags, season, prep time, etc. (done)
 - Natural language queries via Gemini: auto-detected in search bar (4+ words or NL indicators), bilingual DE/EN, season-aware with German produce seasonality, returns ranked recipes with 1-sentence explanations for top 5 matches, graceful fallback to text search on failure (done)
+- **Horizontal card layout**: 120×120px 1:1 image on the left, content with tags on the right. Title truncates at 2 lines, category badge sits right of the title. (done)
 - Shopping list generation from selected recipes (not yet)
 - Recipe scaling (adjust servings) (not yet)
 
@@ -138,15 +141,15 @@ recipes:
 - Skip trivial tests (getters, simple renders) unless they guard against real regressions
 
 ### Running Tests
-- **Backend**: `cd backend && .venv/Scripts/python -m pytest tests/ -v`
+- **Backend**: `cd backend && ..\.venv\Scripts\python -m pytest tests/ -v`
 - **Frontend E2E**: `npx playwright test` (auto-starts Vite dev server)
 - **All**: `npm test` (runs backend then E2E)
 - Backend tests mock Supabase/Gemini via conftest.py — no real credentials needed
 
 ### Backend Virtual Environment
-- The backend uses a Python venv at `backend/.venv/`
-- **Always use the venv** when running backend commands: `backend/.venv/Scripts/python` (Windows)
-- To activate: `cd backend && source .venv/Scripts/activate` (Git Bash) or `.venv\Scripts\activate` (PowerShell)
+- The project uses a Python venv at `.venv/` (project root, not inside backend/)
+- **Always use the venv** when running backend commands: `..\.venv\Scripts\python` (Windows)
+- To activate: `.venv\Scripts\activate` (PowerShell)
 - All dependencies from `requirements.txt` are installed in this venv
 
 ## env file

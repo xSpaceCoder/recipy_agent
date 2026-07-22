@@ -57,7 +57,7 @@ export default function LoginPage() {
   const isForgot = mode === 'forgot'
 
   return (
-    <div className="login-page">
+    <div className="login-page" data-mode={mode}>
       <div className="login-card">
         <h1>Recipe Agent</h1>
         <p className="login-subtitle">Sign in to access your recipes</p>

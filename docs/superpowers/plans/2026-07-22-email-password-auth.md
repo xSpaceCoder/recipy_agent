@@ -1,3 +1,25 @@
+# Email/Password Auth Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace email magic link with email+password login while keeping Google OAuth. Add self-service sign-up and password reset.
+
+**Architecture:** Single LoginPage component with mode toggling (sign-in / sign-up / forgot-password). All auth methods use Supabase JS client built-in functions directly. No backend changes needed.
+
+**Tech Stack:** React, Supabase JS client, Playwright (E2E tests)
+
+## Global Constraints
+
+- `@supabase/supabase-js` already installed — no new dependencies
+- Backend `auth.py` unchanged — JWT verification remains identical
+- Service worker `sw.js` unchanged — already excludes Supabase URLs from cache
+- Auth context `useAuth.jsx` unchanged — session management stays the same
+- All auth via `supabase.auth.*` built-in methods — no custom API endpoints
+- Supabase Dashboard: "Confirm email" already disabled in Auth → Settings
+- Existing users need to be deleted (magic link users can't use password auth)
+
+---
+
 ### Task 1: Rewrite LoginPage with email/password, sign-up toggle, and forgot password
 
 **Files:**
@@ -232,3 +254,122 @@ git commit -m "feat: replace magic link with email/password auth
 
 ---
 
+### Task 2: Add and update CSS styles
+
+**Files:**
+- Modify: `frontend/src/index.css` (lines ~694-700)
+
+**Interfaces:**
+- Consumes: new classNames from LoginPage.jsx: `.auth-toggle`, `.forgot-password`, `.reset-sent`
+- Produces: styled login form
+
+- [ ] **Step 1: Update CSS**
+
+Replace the `.magic-link-sent` block and add styles for auth toggle links:
+
+After line 700 (end of `.magic-link-sent` / `.reset-sent`), replace the block and add new styles:
+
+```css
+.reset-sent {
+  padding: 16px;
+  background: var(--green-bg);
+  color: var(--green);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.auth-links {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth-toggle {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.auth-toggle:hover {
+  text-decoration: underline;
+}
+
+.forgot-password {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+```
+
+Remove the old `.magic-link-sent` block (lines 694-700).
+
+- [ ] **Step 2: Run E2E tests to verify CSS works**
+
+Run: `npx playwright test tests/auth.spec.ts tests/smoke.spec.ts --project=chromium`
+Expected: All tests pass
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/index.css
+git commit -m "style: add login form styles for email/password auth"
+```
+
+---
+
+### Task 3: Update smoke test for new login elements
+
+**Files:**
+- Modify: `tests/smoke.spec.ts`
+
+**Interfaces:**
+- Consumes: updated LoginPage with new DOM structure
+- Produces: verified smoke tests pass with new elements
+
+- [ ] **Step 1: Update smoke tests**
+
+Replace `tests/smoke.spec.ts` with:
+
+```ts
+import { test, expect } from '@playwright/test'
+
+test('login page renders with email/password form', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.login-card')).toBeVisible()
+  await expect(page.locator('input[type="email"]')).toBeVisible()
+  await expect(page.locator('input[type="password"]')).toBeVisible()
+  await expect(page.locator('.submit-btn')).toContainText('Sign In')
+  await expect(page.locator('.google-btn')).toBeVisible()
+  await expect(page.locator('.forgot-password')).toBeVisible()
+  await expect(page.locator('.auth-toggle')).toContainText('Sign up')
+})
+
+test('app has no console errors on load', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text())
+  })
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const unexpected = errors.filter(
+    (e) => !e.includes('auth') && !e.includes('session') && !e.includes('refresh_token')
+  )
+  expect(unexpected).toHaveLength(0)
+})
+```
+
+- [ ] **Step 2: Run smoke tests**
+
+Run: `npx playwright test tests/smoke.spec.ts --project=chromium`
+Expected: Both tests pass
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add tests/smoke.spec.ts
+git commit -m "test: update smoke tests for email/password login form
+```
