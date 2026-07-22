@@ -17,9 +17,11 @@ test.describe('Login Page', () => {
 
   test('toggles to sign-up mode', async ({ page }) => {
     await page.goto('/')
+    await expect(page.locator('.login-page')).toHaveAttribute('data-mode', 'signin')
     await page.getByRole('button', { name: 'Sign up' }).click()
     await expect(page.locator('.submit-btn')).toContainText('Sign Up')
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+    await expect(page.locator('.login-page')).toHaveAttribute('data-mode', 'signup')
   })
 
   test('shows forgot password link in sign-in mode', async ({ page }) => {

@@ -22,7 +22,7 @@ export default function LoginPage() {
       result = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name } }
+        options: { data: { full_name: name.trim() || null } }
       })
     } else if (mode === 'forgot') {
       result = await supabase.auth.resetPasswordForEmail(email, {

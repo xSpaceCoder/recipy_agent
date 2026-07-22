@@ -714,6 +714,7 @@ legend {
   font-size: 0.875rem;
   cursor: pointer;
   padding: 4px;
+  font-family: inherit;
 }
 
 .auth-toggle:hover {
