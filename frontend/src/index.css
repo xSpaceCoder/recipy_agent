@@ -691,12 +691,38 @@ legend {
   margin-bottom: 12px;
 }
 
-.magic-link-sent {
+.reset-sent {
   padding: 16px;
   background: var(--green-bg);
   color: var(--green);
   border-radius: 8px;
   font-weight: 500;
+}
+
+.auth-links {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.auth-toggle {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.auth-toggle:hover {
+  text-decoration: underline;
+}
+
+.forgot-password {
+  color: var(--text-muted);
+  font-size: 0.8rem;
 }
 
 /* Profile Menu */
