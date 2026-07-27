@@ -1,53 +1,120 @@
 import asyncio
 import logging
-import cloudscraper
-import httpx
+
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
-_scraper = None
+
+async def _fetch_page(url: str) -> str:
+    strategies = [
+        ("curl_cffi (Chrome impersonation)", _fetch_curl_cffi),
+        ("cloudscraper (JS challenge solver)", _fetch_cloudscraper),
+        ("httpx (plain HTTP)", _fetch_httpx),
+    ]
+
+    for name, fetch_fn in strategies:
+        try:
+            text = await fetch_fn(url)
+            if _is_blocked(text):
+                logger.info("%s returned a challenge/block page", name)
+                continue
+            return text
+        except Exception as e:
+            logger.info("%s failed with: %s", name, e)
+            continue
+
+    raise RuntimeError(
+        "Failed to fetch URL with all available strategies. "
+        "The site may be blocking automated requests."
+    )
 
 
-def _get_scraper():
-    global _scraper
-    if _scraper is None:
-        _scraper = cloudscraper.create_scraper(
-            browser={
-                "browser": "chrome",
-                "platform": "windows",
-                "desktop": True,
-            }
-        )
-    return _scraper
+async def _fetch_page_for_images(url: str) -> str:
+    strategies = [
+        ("curl_cffi (Chrome impersonation)", _fetch_curl_cffi),
+        ("cloudscraper (JS challenge solver)", _fetch_cloudscraper),
+        ("httpx (plain HTTP)", _fetch_httpx),
+    ]
+
+    for name, fetch_fn in strategies:
+        try:
+            text = await fetch_fn(url)
+            if _is_blocked(text):
+                logger.info("%s returned a challenge/block page for images", name)
+                continue
+            return text
+        except Exception as e:
+            logger.info("%s failed for images with: %s", name, e)
+            continue
+
+    return None
+
+
+def _is_blocked(html: str) -> bool:
+    indicators = [
+        "Zeig uns, dass du ein Mensch bist",
+        "Enable JavaScript and cookies to continue",
+        "Please enable JavaScript",
+        "Just a moment...",
+        "Checking your browser",
+        "__cf_chl_opt",
+        "_cf_chl_opt",
+        "Attention Required",
+        "Cloudflare",
+    ]
+    return any(i in html for i in indicators)
+
+
+async def _fetch_curl_cffi(url: str) -> str:
+    from curl_cffi import requests
+
+    loop = asyncio.get_event_loop()
+    r = await loop.run_in_executor(
+        None,
+        lambda: requests.get(url, impersonate="chrome120", timeout=20),
+    )
+    r.raise_for_status()
+    return r.text
+
+
+async def _fetch_cloudscraper(url: str) -> str:
+    import cloudscraper
+
+    loop = asyncio.get_event_loop()
+    scraper = cloudscraper.create_scraper(
+        browser={
+            "browser": "chrome",
+            "platform": "windows",
+            "desktop": True,
+        }
+    )
+    r = await loop.run_in_executor(
+        None, lambda: scraper.get(url, timeout=20)
+    )
+    r.raise_for_status()
+    return r.text
+
+
+async def _fetch_httpx(url: str) -> str:
+    import httpx
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+    }
+    async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        r = await client.get(url, headers=headers)
+        r.raise_for_status()
+    return r.text
 
 
 async def scrape_webpage(url: str) -> str:
-    loop = asyncio.get_event_loop()
-    scraper = _get_scraper()
-
-    try:
-        response = await loop.run_in_executor(
-            None, lambda: scraper.get(url, timeout=20.0)
-        )
-        response.raise_for_status()
-    except Exception:
-        logger.info("cloudscraper failed, falling back to httpx")
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-                "Accept-Encoding": "gzip, deflate, br",
-            }
-            async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-        except Exception as e:
-            raise e
-
-    soup = BeautifulSoup(response.text, "html.parser")
+    html = await _fetch_page(url)
+    soup = BeautifulSoup(html, "html.parser")
 
     for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
         tag.decompose()
@@ -71,29 +138,11 @@ async def scrape_webpage(url: str) -> str:
 
 
 async def extract_image_url(url: str) -> str | None:
-    loop = asyncio.get_event_loop()
-    scraper = _get_scraper()
+    html = await _fetch_page_for_images(url)
+    if not html:
+        return None
 
-    try:
-        response = await loop.run_in_executor(
-            None, lambda: scraper.get(url, timeout=20.0)
-        )
-        response.raise_for_status()
-    except Exception:
-        logger.info("cloudscraper failed for image extraction, falling back to httpx")
-        try:
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
-            }
-            async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
-                response = await client.get(url, headers=headers)
-                response.raise_for_status()
-        except Exception as e:
-            raise e
-
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
     og_image = soup.find("meta", property="og:image")
     if og_image and og_image.get("content"):
