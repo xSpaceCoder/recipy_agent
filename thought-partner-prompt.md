@@ -32,6 +32,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - Backend handles AI-powered features only (ingestion parsing, consultation)
 - Video/image processing uses Gemini's native multimodal capabilities (no yt-dlp, no separate OCR)
 - Web scraping uses httpx + BeautifulSoup, then Gemini parses the text
+- REWE integration uses REWE's mobile mTLS-protected API via the `rewerse` Python package (certs extracted from Android APK, configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars). A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. `source_url` is set to REWE's `detailUrl`.
 - AI converts American units to metric; common EU measurements (tbsp, tsp) are kept
 - AI outputs recipe text in German or English; tags are English-only
 - Auth: Supabase Auth (Google OAuth + Email magic link), full-screen login page gates the app
@@ -40,7 +41,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 
 **Two Core Functions:**
 
-1. **Recipe Ingestion** (Implemented) — Accept recipes in any format (photos of printed recipes, YouTube video URLs via Gemini multimodal, web links, manual entry). Parse and store them in a standardized format. Auto-estimate missing metadata (prep time, dietary tags, difficulty).
+1. **Recipe Ingestion** (Implemented) — Accept recipes in any format (photos of printed recipes, YouTube video URLs via Gemini multimodal, web links, REWE search via mTLS API, manual entry). Parse and store them in a standardized format. Auto-estimate missing metadata (prep time, dietary tags, difficulty).
 
 2. **Recipe Consultation** (Implemented) — Browse, filter, and search my recipe collection. Natural language queries (e.g. "etwas schnelles mit Reis", "something light for summer") are auto-detected and routed through Gemini, which ranks all recipes by relevance with 1-sentence explanations for top matches. Season-aware, bilingual (DE/EN), graceful fallback to text search. Shopping list generation and recipe scaling are not yet implemented.
 

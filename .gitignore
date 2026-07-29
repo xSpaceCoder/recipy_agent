@@ -18,3 +18,4 @@ gcp-key.json
 /playwright/.auth/
 .env.test
 .gcp-key.json
+test_rewe_direct.py

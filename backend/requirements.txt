@@ -8,6 +8,7 @@ pydantic-settings==2.9.1
 httpx==0.28.0
 curl_cffi==0.15.0
 cloudscraper==1.2.71
+rewerse
 beautifulsoup4==4.13.0
 python-multipart==0.0.20
 pytest

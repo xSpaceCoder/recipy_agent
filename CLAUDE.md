@@ -25,6 +25,7 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Video processing**: Gemini's native multimodal video understanding (no yt-dlp, no transcript extraction)
 - **Image processing**: Send images directly to Gemini (multimodal, no separate OCR)
 - **Web scraping**: httpx + BeautifulSoup to extract text, then Gemini parses it
+- **REWE integration**: REWE.de uses Cloudflare Bot Management (hard 403 from Cloud Run datacenter IPs). Instead of scraping, the app uses REWE's mobile mTLS-protected API via the `rewerse` Python package. A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. Certificate files extracted from the REWE Android APK are configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars.
 - **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
 - **Frontend hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
 - **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**`
@@ -41,6 +42,7 @@ Accept recipes in ANY format and normalize them:
 - **Image** (photo of a printed recipe) → sent directly to Gemini multimodal
 - **Video** (YouTube Shorts, Instagram Reels) → video URL passed to Gemini for analysis
 - **Web link** → scrape with httpx/BS4, then AI extraction
+- **REWE** → dedicated tab in ingestion UI; user searches by recipe title via REWE's mobile mTLS API, picks from results, recipe is imported directly with `source_url` set to REWE's `detailUrl`
 - **Manual entry** → structured form
 
 The agent estimates missing metadata (prep time, dietary tags, etc.) when not explicitly provided.
@@ -116,7 +118,7 @@ recipes:
         ├── config.py             (pydantic-settings)
         ├── auth.py               (JWT verification dependency via Supabase get_user)
         ├── routers/              (recipes.py, ingestion.py, consultation.py)
-        └── services/             (ai_parser.py, scraper.py, consultation.py)
+        └── services/             (ai_parser.py, scraper.py, consultation.py, rewe_api.py)
 ```
 
 ## What Supabase Provides Out of the Box

@@ -13,6 +13,9 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searched, setSearched] = useState(false)
 
   useEffect(() => {
     if (initialUrl) {
@@ -82,6 +85,55 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
     }
   }
 
+  const handleReweSearch = async () => {
+    setLoading(true)
+    setError(null)
+    setSearched(false)
+    setSearchResults([])
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/ingest/rewe/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ search_term: searchTerm }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || 'Search failed')
+      }
+      const results = await res.json()
+      setSearchResults(results)
+      setSearched(true)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReweConfirm = async (recipeId, detailUrl) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch(`${API_URL}/api/ingest/rewe/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ recipe_id: recipeId, detail_url: detailUrl }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || 'Failed to load recipe')
+      }
+      const recipe = await res.json()
+      setPreview(recipe)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDiscard = async () => {
     if (preview?.id) {
       setLoading(true)
@@ -95,6 +147,9 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
     setPreview(null)
     setUrl('')
     setFiles(null)
+    setSearchTerm('')
+    setSearchResults([])
+    setSearched(false)
     setLoading(false)
   }
 
@@ -175,6 +230,9 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
         <button className={mode === 'youtube' ? 'active' : ''} onClick={() => setMode('youtube')}>
           YouTube
         </button>
+        <button className={mode === 'rewe' ? 'active' : ''} onClick={() => setMode('rewe')}>
+          REWE
+        </button>
         <button className={mode === 'image' ? 'active' : ''} onClick={() => setMode('image')}>
           Photo
         </button>
@@ -209,6 +267,60 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
               >
                 {loading ? 'Analyzing...' : 'Extract Recipe'}
               </button>
+            </div>
+          )}
+
+          {mode === 'rewe' && (
+            <div className="ingest-input">
+              <label>
+                Search REWE recipe by title
+                <input
+                  type="text"
+                  placeholder="e.g. vegane Bowl mit Quinoa..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleReweSearch()}
+                />
+              </label>
+              <button
+                className="submit-btn"
+                onClick={handleReweSearch}
+                disabled={loading || !searchTerm.trim()}
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+
+              {searched && !loading && searchResults.length === 0 && (
+                <p className="status" style={{ marginTop: '0.5rem' }}>No recipes found. Try a different search term.</p>
+              )}
+
+              {searchResults.length > 0 && (
+                <div className="rewe-results" style={{ marginTop: '1rem' }}>
+                  <p className="status">Select a recipe to import:</p>
+                  {searchResults.map(r => (
+                    <button
+                      key={r.id}
+                      className="rewe-result-item"
+                      onClick={() => handleReweConfirm(r.id, r.detailUrl)}
+                      disabled={loading}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.75rem',
+                        marginBottom: '0.25rem',
+                        background: 'var(--bg-secondary, #f0f0f0)',
+                        border: '1px solid var(--border, #ddd)',
+                        borderRadius: '6px',
+                        cursor: loading ? 'wait' : 'pointer',
+                        fontSize: '0.95rem',
+                      }}
+                    >
+                      {r.title}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

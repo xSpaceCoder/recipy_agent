@@ -53,6 +53,6 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 - **PWA**: Installable on phones, offline caching via service worker (excludes Supabase auth from cache), Web Share Target API (share recipes from browser/YouTube directly to the app)
 - **Session persistence**: Supabase client uses `localStorage` with `autoRefreshToken` — users stay logged in as long as they open the app once per 7 days (free tier refresh token window)
 - **CI/CD**: Vercel GitHub integration for frontend; GitHub Actions + `google-github-actions/deploy-cloudrun@v2` for backend
-- **Backend env vars**: Set on Cloud Run directly (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_AI_API_KEY`, `ALLOWED_ORIGINS` using `|` as separator)
+- **Backend env vars**: Set on Cloud Run directly (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_AI_API_KEY`, `ALLOWED_ORIGINS` using `|` as separator, `REWE_CERT_PATH`, `REWE_KEY_PATH`)
 - **CORS**: Managed via `ALLOWED_ORIGINS` env var on Cloud Run (pipe-separated origins)
 - **AI Consultation**: Natural language search via `POST /api/recipes/consult` — auto-detected in frontend (4+ words or NL indicators), Gemini ranks all user-accessible recipes with seasonal context, bilingual DE/EN, graceful fallback to Supabase full-text search

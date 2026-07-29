@@ -15,6 +15,7 @@ from app.services.ai_parser import (
     select_dish_image_from_photos,
 )
 from app.services.scraper import scrape_webpage, extract_image_url
+from app.services.rewe_api import init_rewerse, search_rewe_recipes, fetch_rewe_recipe_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,12 @@ class UrlRequest(BaseModel):
 
 @router.post("/url")
 async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_user)):
+    return await _ingest_generic_url(request.url, user)
+
+
+async def _ingest_generic_url(url: str, user: dict) -> dict:
     try:
-        content = await scrape_webpage(request.url)
+        content = await scrape_webpage(url)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to fetch URL: {e}")
 
@@ -77,13 +82,13 @@ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_
         raise HTTPException(status_code=422, detail=recipe["error"])
 
     try:
-        image_url = await extract_image_url(request.url)
+        image_url = await extract_image_url(url)
         if image_url:
             recipe["image_url"] = image_url
     except Exception:
         pass
 
-    recipe["source_url"] = request.url
+    recipe["source_url"] = url
     recipe["source_type"] = "link"
 
     try:
@@ -93,7 +98,65 @@ async def ingest_from_url(request: UrlRequest, user: dict = Depends(get_current_
         raise HTTPException(status_code=500, detail="Failed to save recipe")
 
     recipe["source_accessed_at"] = _now_iso()
+    return recipe
 
+
+class ReweSearchRequest(BaseModel):
+    search_term: str
+
+
+class ReweConfirmRequest(BaseModel):
+    recipe_id: str
+    detail_url: str
+
+
+async def _ensure_rewerse(settings) -> bool:
+    if not settings.rewe_cert_path or not settings.rewe_key_path:
+        raise HTTPException(
+            status_code=400,
+            detail="REWE_CERT_PATH and REWE_KEY_PATH are not configured",
+        )
+    initialized = await init_rewerse(settings.rewe_cert_path, settings.rewe_key_path)
+    if not initialized:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to initialize REWE API client. Check certificate files.",
+        )
+    return True
+
+
+@router.post("/rewe/search")
+async def rewe_search(request: ReweSearchRequest, user: dict = Depends(get_current_user)):
+    settings = get_settings()
+    await _ensure_rewerse(settings)
+    try:
+        results = await search_rewe_recipes(request.search_term)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"REWE search failed: {e}")
+
+
+@router.post("/rewe/confirm")
+async def rewe_confirm(request: ReweConfirmRequest, user: dict = Depends(get_current_user)):
+    settings = get_settings()
+    await _ensure_rewerse(settings)
+
+    try:
+        recipe = await fetch_rewe_recipe_by_id(request.recipe_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch REWE recipe: {e}")
+
+    recipe["source_url"] = request.detail_url
+    recipe["source_type"] = "link"
+
+    try:
+        _do_save(recipe, user["id"])
+    except Exception as e:
+        logger.error(f"Failed to save recipe: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save recipe")
+
+    recipe["saved_at"] = _now_iso()
+    logger.info("Successfully ingested REWE recipe: %s", recipe.get("title", "unknown"))
     return recipe
 
 
