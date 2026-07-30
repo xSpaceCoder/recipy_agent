@@ -24,11 +24,10 @@ jobs:
           service: recipe-agent-api
           source: ./backend
           region: europe-west1
-
-      - name: Set environment variables
-        env:
-          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
-        run: |
-          gcloud run services update recipe-agent-api \
-            --region=europe-west1 \
-            --update-env-vars="ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
+          secrets: |
+            /secrets/rewe-cert/latest=rewe-cert:latest
+            /secrets/rewe-key/latest=rewe-key:latest
+          env_vars: |
+            ALLOWED_ORIGINS=${{ vars.ALLOWED_ORIGINS }}
+            REWE_CERT_PATH=/secrets/rewe-cert/latest
+            REWE_KEY_PATH=/secrets/rewe-key/latest
