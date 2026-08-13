@@ -28,9 +28,9 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **REWE integration**: REWE.de uses Cloudflare Bot Management (hard 403 from Cloud Run datacenter IPs). Instead of scraping, the app uses REWE's mobile mTLS-protected API via the `rewerse` Python package. A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. Certificate files extracted from the REWE Android APK are configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars.
 - **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
 - **Frontend hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
-- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**`
+- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**` (or when `deploy-backend.yml` itself changes)
 - **PWA**: Installable on phones, service worker for offline caching, Web Share Target API for sharing recipes directly from browser/YouTube (like sharing to WhatsApp)
-- **Auth**: Supabase Auth with Google OAuth + Email magic link; full-screen login page gates the app
+- **Auth**: Supabase Auth with Google OAuth + email/password (three modes: sign-in, self-service sign-up, forgot-password reset); full-screen login page gates the app
 - **Session persistence**: Supabase client configured with `persistSession: true`, `autoRefreshToken: true`, dedicated `storageKey`. Users stay logged in as long as they open the app once within 7 days (free tier refresh token window). Service worker excludes Supabase requests from caching to avoid stale auth responses.
 - **Multi-user model**: Each recipe has a `user_id` (owner) and `visibility` (public/private). Users see own recipes + public recipes from others. Rating and edit/delete are owner-only.
 - **Backend auth**: All API endpoints verify Supabase JWT via `Authorization: Bearer` header; service role key used for DB access with manual user-scoping
@@ -90,6 +90,8 @@ recipes:
 ├── .env.example                  (template with dummy values)
 ├── .mcp.json                     (MCP server config — gitignored)
 ├── vercel.json                   (Vercel deployment config — build + SPA routing)
+├── .claude/skills/beforepush/    (pre-push skill: runs tests + syncs docs + backlog)
+├── featureIdeas.md               (feature idea backlog — maintained by beforepush skill)
 ├── .github/workflows/
 │   ├── deploy-backend.yml        (GitHub Actions — auto-deploy backend to Cloud Run)
 │   └── playwright.yml            (GitHub Actions — E2E tests on push/PR)
@@ -123,7 +125,7 @@ recipes:
 
 ## What Supabase Provides Out of the Box
 - PostgreSQL database with Row Level Security
-- Auth (email/password, OAuth, magic link)
+- Auth (email/password, OAuth)
 - Realtime subscriptions
 - Storage (for recipe images)
 - Edge Functions (Deno-based serverless functions)

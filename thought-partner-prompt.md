@@ -25,7 +25,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - AI: Google AI Studio / Gemini 2.5 Flash for parsing and consultation
 - Frontend Hosting: Vercel (free tier, auto-deploy on push, CI/CD via GitHub)
 - Backend Hosting: Google Cloud Run (free tier, europe-west1, auto-deploy via GitHub Actions)
-- Users: me and friends/family (multi-user via Supabase Auth: Google OAuth + Email magic link)
+- Users: me and friends/family (multi-user via Supabase Auth: Google OAuth + email/password)
 
 **Architecture:**
 - Frontend talks directly to Supabase for CRUD (using JS client + anon key)
@@ -35,7 +35,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - REWE integration uses REWE's mobile mTLS-protected API via the `rewerse` Python package (certs extracted from Android APK, configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars). A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. `source_url` is set to REWE's `detailUrl`.
 - AI converts American units to metric; common EU measurements (tbsp, tsp) are kept
 - AI outputs recipe text in German or English; tags are English-only
-- Auth: Supabase Auth (Google OAuth + Email magic link), full-screen login page gates the app
+- Auth: Supabase Auth (Google OAuth + email/password, three modes: sign-in, self-service sign-up, forgot-password reset), full-screen login page gates the app
 - Multi-user: each recipe has user_id (owner) + visibility (public/private). Users see own + public recipes. Rating and edit/delete are owner-only.
 - Backend verifies Supabase JWT on all endpoints; manual user-scoping since service role key bypasses RLS
 
@@ -58,7 +58,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 
 **What Supabase gives me for free:**
 - PostgreSQL database + auto-generated REST API
-- Auth (Google OAuth + Email magic link, multi-user)
+- Auth (Google OAuth + email/password, multi-user)
 - Row Level Security (per-user recipe isolation + public sharing)
 - File Storage (recipe images)
 - Full-text search
@@ -86,16 +86,17 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 7. **Ask clarifying questions** — If my question is ambiguous, ask before guessing.
 
 ### Current Status
-Project has **AI consultation implemented** (as of 2026-05-19):
+Project has **AI consultation implemented** (as of 2026-07-31):
 - Supabase database deployed with recipes table + RLS + full-text search + user ownership
-- Auth: Supabase Auth with Google OAuth + Email magic link, full-screen login page
+- Auth: Supabase Auth with Google OAuth + email/password, full-screen login page
 - Session persistence: `persistSession: true` + `autoRefreshToken: true` in Supabase client config; service worker bypasses Supabase requests; users stay logged in if they open the app once within 7 days (free tier refresh token window)
 - Multi-user: per-user recipe ownership, public/private visibility toggle, rating owner-only
 - Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context, natural language search with AI explanations
 - Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), consultation endpoint (NL query → Gemini ranks recipes with seasonal context), JWT verification on all endpoints
+- Recipe Ingestion: accepts images, video URLs, web links, REWE search via mTLS API (`rewerse` package), and manual entry; auto-saves to Supabase after AI parsing with a "Skip & Save" preview flow; AI selects the hero image via `hero_image_index`
 - AI Consultation: auto-detects NL queries in search bar, bilingual (DE/EN), season-aware with German produce seasonality, returns ranked recipes with 1-sentence explanations, graceful fallback to text search
 - MCP server connected for direct Supabase management from Claude Code
-- Vercel deployment configured (vercel.json, CI/CD via GitHub integration)
+- Vercel deployment configured (vercel.json, CI/CD via GitHub integration); backend auto-deploys to Cloud Run on push to `backend/**` or workflow file changes
 - PWA setup: manifest.json, service worker, Web Share Target API (share recipes from browser/YouTube like sharing to WhatsApp)
 - Multiple users: me and friends/family (access via installed PWA on phones)
 

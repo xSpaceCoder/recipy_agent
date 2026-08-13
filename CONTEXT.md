@@ -1,12 +1,12 @@
 # Project Context
 
 ## Status: AI Consultation Implemented
-Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured. Multi-user authentication (Google OAuth + Email magic link) with per-user recipe ownership and public/private visibility is implemented. AI-powered recipe consultation (natural language search via Gemini, bilingual DE/EN, season-aware) is implemented.
+Frontend (React + Vite PWA), backend (FastAPI), and Supabase database are implemented. Deployment via Vercel (free tier, CI/CD on git push) is configured. Multi-user authentication (Google OAuth + email/password) with per-user recipe ownership and public/private visibility is implemented. AI-powered recipe consultation (natural language search via Gemini, bilingual DE/EN, season-aware) is implemented.
 
 ## Who
 - **Developer**: Solo — one person, no team
 - **Purpose**: Personal education and interest. This is not a commercial product. I want to learn by building, explore agentic coding workflows, and end up with something genuinely useful for my own kitchen.
-- **Users**: Me + friends/family (multi-user via Supabase Auth with Google OAuth + Email magic link)
+- **Users**: Me + friends/family (multi-user via Supabase Auth with Google OAuth + email/password)
 
 ## Domain: Recipe Management
 I cook regularly — casual dinners at home and cakes/desserts I bring to friends. My recipes are currently scattered across:
@@ -45,11 +45,11 @@ A **Recipe Agent** — a mobile-first web app backed by AI that:
 - Solo developer, limited time — favor simplicity and "good enough" over perfection
 - Behind corporate proxy — package installs may require VPN disconnect
 - No budget for expensive hosting — prefer free tiers (Supabase free, Vercel free tier)
-- Multiple users (me + friends/family) via Supabase Auth (Google OAuth + Email magic link), per-user recipe ownership with public/private visibility
+- Multiple users (me + friends/family) via Supabase Auth (Google OAuth + email/password), per-user recipe ownership with public/private visibility
 
 ## Deployment
 - **Frontend hosting**: Vercel (free tier) — auto-deploys on `git push` to `main`, preview URLs for PRs
-- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — containerized FastAPI, auto-deploys via GitHub Actions on push to `backend/**`, manual trigger via `workflow_dispatch`
+- **Backend hosting**: Google Cloud Run (free tier, europe-west1) — containerized FastAPI, auto-deploys via GitHub Actions on push to `backend/**` (or when `deploy-backend.yml` changes), manual trigger via `workflow_dispatch`
 - **PWA**: Installable on phones, offline caching via service worker (excludes Supabase auth from cache), Web Share Target API (share recipes from browser/YouTube directly to the app)
 - **Session persistence**: Supabase client uses `localStorage` with `autoRefreshToken` — users stay logged in as long as they open the app once per 7 days (free tier refresh token window)
 - **CI/CD**: Vercel GitHub integration for frontend; GitHub Actions + `google-github-actions/deploy-cloudrun@v2` for backend
