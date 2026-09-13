@@ -8,6 +8,14 @@ You are my **Thought Partner** for this project. Guide me through architecture d
 
 Read `CONTEXT.md` for full project context (who I am, why I'm building this, constraints, learning goals).
 
+## Common Commands
+- **Frontend dev server**: `npm run dev` (root) or `cd frontend && npm run dev` — Vite dev server
+- **Frontend build**: `npm run build` (root) or `cd frontend && npm run build`
+- **Backend dev server**: `cd backend && ..\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8080`
+- **Backend tests**: `npm run test:backend` (see Testing section below)
+- **Frontend E2E tests**: `npm run test:e2e`
+- **All tests**: `npm test`
+
 ## Project Overview
 A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Frontend**: React + Vite (PWA, responsive, mobile-first)
@@ -25,7 +33,7 @@ A mobile-first recipe management PWA with AI-powered ingestion and consultation.
 - **Video processing**: Gemini's native multimodal video understanding (no yt-dlp, no transcript extraction)
 - **Image processing**: Send images directly to Gemini (multimodal, no separate OCR)
 - **Web scraping**: httpx + BeautifulSoup to extract text, then Gemini parses it
-- **REWE integration**: REWE.de uses Cloudflare Bot Management (hard 403 from Cloud Run datacenter IPs). Instead of scraping, the app uses REWE's mobile mTLS-protected API via the `rewerse` Python package. A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. Certificate files extracted from the REWE Android APK are configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars.
+- **REWE integration**: REWE.de uses Cloudflare Bot Management (hard 403 from Cloud Run datacenter IPs). Instead of scraping, the app uses REWE's mobile mTLS-protected API via the `rewerse` Python package (pinned to `1.4.0` — REWE reworked their recipe backend and the maintainer removed/rebuilt recipe support against it; older versions have no recipe endpoints at all). A dedicated "REWE" tab in the ingestion UI lets users search by recipe title (results show a thumbnail), pick from results, and import directly. After fetching REWE's recipe data, a narrow Gemini classification pass fills in `category`/`season`/dietary tags (REWE's own data isn't re-derived, only classified) before saving; falls back to the raw REWE mapping if that call fails. Certificate files extracted from the REWE Android APK are configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars.
 - **Units**: AI converts American units to metric system; common EU measurements (tbsp, tsp) are kept
 - **Frontend hosting**: Vercel free tier — auto-deploys frontend on `git push` to `main`; PRs get preview URLs
 - **Backend hosting**: Google Cloud Run (free tier, europe-west1) — auto-deploys via GitHub Actions on push to `backend/**` (or when `deploy-backend.yml` itself changes)
@@ -119,8 +127,9 @@ recipes:
         ├── main.py               (app entry, CORS via ALLOWED_ORIGINS env var, routers)
         ├── config.py             (pydantic-settings)
         ├── auth.py               (JWT verification dependency via Supabase get_user)
+        ├── database.py           (get_supabase() — service-role client used by backend routes)
         ├── routers/              (recipes.py, ingestion.py, consultation.py)
-        └── services/             (ai_parser.py, scraper.py, consultation.py, rewe_api.py)
+        └── services/             (ai_parser.py, scraper.py, consultation.py, rewe_api.py, youtube.py)
 ```
 
 ## What Supabase Provides Out of the Box

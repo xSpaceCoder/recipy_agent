@@ -113,6 +113,39 @@ def select_dish_image_from_photos(title: str, images: list[dict]) -> int:
     return index
 
 
+CLASSIFY_METADATA_PROMPT = """You are a recipe classification assistant. You are given a recipe's title, ingredients, instructions, and some existing tags (possibly in German). Do NOT re-extract or change the ingredients, instructions, servings, or times - only classify metadata.
+
+IMPORTANT: The user is vegetarian (no meat, no fish). If the recipe contains meat or fish, set "is_vegetarian": false. Otherwise set "is_vegetarian": true.
+
+Return ONLY valid JSON with this exact structure (no markdown, no code fences):
+{
+  "tags": ["vegetarian", "other relevant tags like: vegan, gluten-free, light, cozy, fiber-rich, quick, meal-prep"],
+  "category": "one of: dinner, cake, dessert, soup/stew, breakfast, snack",
+  "season": ["relevant seasons: spring, summer, autumn, winter, or all"],
+  "is_vegetarian": true/false
+}
+
+Use english only for tags and category. Base your classification on the ingredients and instructions provided.
+"""
+
+
+def classify_recipe_metadata(title: str, ingredients: list[dict], instructions: list[str], existing_tags: list[str]) -> dict:
+    model = get_model()
+    ingredients_text = "\n".join(
+        f"- {i.get('quantity', '')} {i.get('unit', '')} {i.get('name', '')}".strip()
+        for i in ingredients
+    )
+    instructions_text = "\n".join(f"{idx + 1}. {step}" for idx, step in enumerate(instructions))
+    content = (
+        f"Title: {title}\n\n"
+        f"Ingredients:\n{ingredients_text}\n\n"
+        f"Instructions:\n{instructions_text}\n\n"
+        f"Existing tags: {', '.join(existing_tags)}"
+    )
+    response = model.generate_content([CLASSIFY_METADATA_PROMPT, content])
+    return _parse_response(response.text)
+
+
 def _parse_response(text: str) -> dict:
     cleaned = text.strip()
     if cleaned.startswith("```"):

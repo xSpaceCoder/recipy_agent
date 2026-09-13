@@ -32,7 +32,7 @@ A mobile-first web app that helps me organize, store, and choose recipes for cas
 - Backend handles AI-powered features only (ingestion parsing, consultation)
 - Video/image processing uses Gemini's native multimodal capabilities (no yt-dlp, no separate OCR)
 - Web scraping uses httpx + BeautifulSoup, then Gemini parses the text
-- REWE integration uses REWE's mobile mTLS-protected API via the `rewerse` Python package (certs extracted from Android APK, configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars). A dedicated "REWE" tab in the ingestion UI lets users search by recipe title, pick from results, and import directly. `source_url` is set to REWE's `detailUrl`.
+- REWE integration uses REWE's mobile mTLS-protected API via the `rewerse` Python package (certs extracted from Android APK, configured via `REWE_CERT_PATH`/`REWE_KEY_PATH` env vars; pinned to `1.4.0`, the first version with recipe support restored after REWE reworked their recipe backend). A dedicated "REWE" tab in the ingestion UI lets users search by recipe title (with thumbnails), pick from results, and import directly — a Gemini pass classifies category/season/tags on top of REWE's own data before saving. `source_url` is set to REWE's `detailUrl`.
 - AI converts American units to metric; common EU measurements (tbsp, tsp) are kept
 - AI outputs recipe text in German or English; tags are English-only
 - Auth: Supabase Auth (Google OAuth + email/password, three modes: sign-in, self-service sign-up, forgot-password reset), full-screen login page gates the app
@@ -93,7 +93,7 @@ Project has **AI consultation implemented** (as of 2026-07-31):
 - Multi-user: per-user recipe ownership, public/private visibility toggle, rating owner-only
 - Frontend: React + Vite PWA with recipe list, manual entry form, AI import, auth context, natural language search with AI explanations
 - Backend: FastAPI with ingestion endpoints (URL scraping, YouTube via Gemini multimodal, image upload), consultation endpoint (NL query → Gemini ranks recipes with seasonal context), JWT verification on all endpoints
-- Recipe Ingestion: accepts images, video URLs, web links, REWE search via mTLS API (`rewerse` package), and manual entry; auto-saves to Supabase after AI parsing with a "Skip & Save" preview flow; AI selects the hero image via `hero_image_index`
+- Recipe Ingestion: accepts images, video URLs, web links, REWE search via mTLS API (`rewerse` package, reworked against REWE's new recipe backend with AI-classified category/season/tags), and manual entry; auto-saves to Supabase after AI parsing with a "Skip & Save" preview flow; AI selects the hero image via `hero_image_index`
 - AI Consultation: auto-detects NL queries in search bar, bilingual (DE/EN), season-aware with German produce seasonality, returns ranked recipes with 1-sentence explanations, graceful fallback to text search
 - MCP server connected for direct Supabase management from Claude Code
 - Vercel deployment configured (vercel.json, CI/CD via GitHub integration); backend auto-deploys to Cloud Run on push to `backend/**` or workflow file changes

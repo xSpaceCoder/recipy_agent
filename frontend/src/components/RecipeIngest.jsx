@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/useAuth'
 import RecipeForm from './RecipeForm'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
   const { user } = useAuth()
@@ -304,7 +304,9 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
                       onClick={() => handleReweConfirm(r.id, r.detailUrl)}
                       disabled={loading}
                       style={{
-                        display: 'block',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
                         width: '100%',
                         textAlign: 'left',
                         padding: '0.75rem',
@@ -316,7 +318,20 @@ function RecipeIngest({ onSaved, initialUrl, onConsumeUrl }) {
                         fontSize: '0.95rem',
                       }}
                     >
-                      {r.title}
+                      {r.image_url && (
+                        <img
+                          src={r.image_url}
+                          alt=""
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <span>{r.title}</span>
                     </button>
                   ))}
                 </div>

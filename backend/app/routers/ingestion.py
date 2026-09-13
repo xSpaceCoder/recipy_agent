@@ -13,6 +13,7 @@ from app.services.ai_parser import (
     parse_recipe_from_images,
     parse_recipe_from_video,
     select_dish_image_from_photos,
+    classify_recipe_metadata,
 )
 from app.services.scraper import scrape_webpage, extract_image_url
 from app.services.rewe_api import init_rewerse, search_rewe_recipes, fetch_rewe_recipe_by_id
@@ -145,6 +146,20 @@ async def rewe_confirm(request: ReweConfirmRequest, user: dict = Depends(get_cur
         recipe = await fetch_rewe_recipe_by_id(request.recipe_id)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to fetch REWE recipe: {e}")
+
+    try:
+        metadata = classify_recipe_metadata(
+            recipe.get("title", ""),
+            recipe.get("ingredients", []),
+            recipe.get("instructions", []),
+            recipe.get("tags", []),
+        )
+        if "error" not in metadata:
+            recipe["category"] = metadata.get("category") or recipe.get("category")
+            recipe["season"] = metadata.get("season") or recipe.get("season")
+            recipe["tags"] = list(dict.fromkeys(recipe.get("tags", []) + metadata.get("tags", [])))
+    except Exception as e:
+        logger.warning("AI metadata classification failed for REWE recipe, using raw mapping: %s", e)
 
     recipe["source_url"] = request.detail_url
     recipe["source_type"] = "link"

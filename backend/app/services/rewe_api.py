@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +39,13 @@ async def search_rewe_recipes(search_term: str) -> list[dict]:
         raise RuntimeError("REWE API not initialized. Set REWE_CERT_PATH and REWE_KEY_PATH.")
 
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(
-        None, lambda: client.recipe_search(search_term=search_term)
-    )
+    try:
+        result = await loop.run_in_executor(
+            None, lambda: client.recipe_search(search_term=search_term)
+        )
+    except Exception as e:
+        logger.error("REWE recipe search failed for %r: %s", search_term, e)
+        raise
 
     recipes = result.get("recipes", [])
     return [
@@ -50,6 +53,7 @@ async def search_rewe_recipes(search_term: str) -> list[dict]:
             "id": r["id"],
             "title": r.get("title", ""),
             "detailUrl": r.get("detailUrl", ""),
+            "image_url": (r.get("imageUrls") or [None])[0],
         }
         for r in recipes
     ]
@@ -61,63 +65,52 @@ async def fetch_rewe_recipe_by_id(recipe_id: str) -> dict:
         raise RuntimeError("REWE API not initialized. Set REWE_CERT_PATH and REWE_KEY_PATH.")
 
     loop = asyncio.get_event_loop()
-    details = await loop.run_in_executor(
-        None, lambda: client.get_recipe_details(recipe_id)
-    )
+    try:
+        recipe = await loop.run_in_executor(
+            None, lambda: client.get_recipe_details(recipe_id)
+        )
+    except Exception as e:
+        logger.error("REWE recipe detail fetch failed for id %r: %s", recipe_id, e)
+        raise
 
-    recipe = details.get("recipe", {})
-    if not recipe:
+    if not recipe or not recipe.get("id"):
         raise RuntimeError("Failed to fetch recipe details")
 
-    ingredients_raw = recipe.get("ingredients", {})
     ingredients = [
         {
             "name": item.get("name", ""),
-            "quantity": _format_quantity(item.get("quantity", 0)),
-            "unit": item.get("unit", ""),
+            "quantity": _format_quantity(item.get("quantity")),
+            "unit": item.get("unit") or "",
         }
-        for item in ingredients_raw.get("items", [])
+        for item in recipe.get("ingredients", [])
     ]
 
-    servings = ingredients_raw.get("portions", 0) or None
-    total_minutes = _parse_duration(recipe.get("duration", ""))
+    instructions = [
+        step.get("description", "")
+        for step in recipe.get("preparation", {}).get("steps", [])
+    ]
 
-    tags = []
-    difficulty = recipe.get("difficultyDescription", "").lower()
-    if difficulty:
-        tags.append(difficulty)
+    image_urls = recipe.get("imageUrls") or []
+    image_url = image_urls[0].get("urls", {}).get("default") if image_urls else None
 
     return {
         "title": recipe.get("title", ""),
         "description": "",
         "ingredients": ingredients,
-        "instructions": recipe.get("steps", []),
-        "servings": servings,
-        "prep_time_minutes": total_minutes or None,
-        "cook_time_minutes": None,
+        "instructions": instructions,
+        "servings": recipe.get("serving", {}).get("quantity") or None,
+        "prep_time_minutes": recipe.get("timePreparation"),
+        "cook_time_minutes": recipe.get("timeCooking"),
         "bake_time_minutes": None,
         "chill_time_minutes": None,
         "freeze_time_minutes": None,
-        "tags": tags,
+        "tags": [t.lower() for t in recipe.get("tags", [])],
         "category": None,
         "season": [],
-        "image_url": recipe.get("imageUrl") or None,
+        "image_url": image_url,
         "source_url": "",
         "source_type": "link",
     }
-
-
-def _parse_duration(duration: str) -> int:
-    if not duration:
-        return 0
-    total = 0
-    h = re.search(r"(\d+)\s*(?:Std\.|Stunden|h)", duration)
-    if h:
-        total += int(h.group(1)) * 60
-    m = re.search(r"(\d+)\s*(?:Min\.|Minuten|min|m)", duration)
-    if m:
-        total += int(m.group(1))
-    return total
 
 
 def _format_quantity(q) -> str:
@@ -126,5 +119,5 @@ def _format_quantity(q) -> str:
     if isinstance(q, (int, float)):
         if q == int(q):
             return str(int(q))
-        return str(q).replace(".", ",") if q == round(q, 1) else str(q)
+        return str(q)
     return str(q)
