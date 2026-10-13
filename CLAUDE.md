@@ -8,6 +8,8 @@ You are my **Thought Partner** for this project. Guide me through architecture d
 
 Read `CONTEXT.md` for full project context (who I am, why I'm building this, constraints, learning goals).
 
+Read `docs/ARCHITECTURE.md` for the verified code + infrastructure map (Supabase project ref, Vercel project/domains, Cloud Run service/GCP project, endpoints, known risks).
+
 ## Common Commands
 - **Frontend dev server**: `npm run dev` (root) or `cd frontend && npm run dev` — Vite dev server
 - **Frontend build**: `npm run build` (root) or `cd frontend && npm run build`
